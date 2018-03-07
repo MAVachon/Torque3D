@@ -1479,3 +1479,13 @@ DefineConsoleMethod( GuiRiverEditorCtrl, regenerate, void, (), , "" )
    if ( river )
       river->regenerate();
 }
+//TorqueLab Feature
+DefineConsoleMethod(GuiRiverEditorCtrl, setSelectedNode, void, (S32 node), , "")
+{
+	object->setSelectedNode(node);
+}
+DefineConsoleMethod(GuiRiverEditorCtrl, getSelectedNode, S32, (), , "")
+{
+	return object->getSelectedNode();
+}
+//TorqueLab Feature End

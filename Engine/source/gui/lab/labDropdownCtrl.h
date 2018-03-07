@@ -20,52 +20,74 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _GUISWATCHBUTTONCTRL_H_
-#define _GUISWATCHBUTTONCTRL_H_
+#ifndef _LABBOXROLLOUTCTRL_H_
+#define _LABBOXROLLOUTCTRL_H_
 
-#ifndef _GUIBUTTONBASECTRL_H_
-   #include "gui/buttons/guiButtonBaseCtrl.h"
+#ifndef _GUIPOPUPCTRLEX_H_
+#include "gui/controls/guiPopUpCtrlEx.h"
 #endif
 
-
-/// A color swatch button.
+/// Base class for controls that act as containers to other controls.
 ///
-class GuiSwatchButtonCtrl : public GuiButtonBaseCtrl
+/// @addtogroup gui_container_group Containers
+///
+/// @ingroup gui_group Gui System
+/// @{
+class LabDropdownCtrl;
+class LabDropdownTextListCtrl;
+
+class LabDropdownBackgroundCtrl : public GuiPopUpBackgroundCtrlEx
 {
-   public:
-      
-      typedef GuiButtonBaseCtrl Parent;
-
-   protected:
-      
-      /// The color to display on the button.
-      LinearColorF mSwatchColor;
-      /// Bitmap used for mGrid
-		StringTableEntry mGridBitmap; //TorqueLab bad bitmap crash fix
-											
-		//String mGridBitmap;
-
-      /// Background texture that will show through with transparent colors.
-      GFXTexHandle mGrid;
-      
-   public:
-
-      GuiSwatchButtonCtrl();
-
-      /// Return the color displayed in the swatch.
-      LinearColorF getColor() { return mSwatchColor; }
-
-      /// Set the color to display in the swatch.
-      void setColor( const LinearColorF &color ) { mSwatchColor = color; }
-
-      // GuiButtonBaseCtrl
-      virtual bool onWake();
-      virtual void onRender(Point2I offset, const RectI &updateRect);
-
-      static void initPersistFields();
-
-      DECLARE_CONOBJECT( GuiSwatchButtonCtrl );
-      DECLARE_DESCRIPTION( "A color swatch button." );
+protected:
+	LabDropdownCtrl *mPopUpCtrl;
+	LabDropdownTextListCtrl *mTextList;
+public:
+	LabDropdownBackgroundCtrl(LabDropdownCtrl *ctrl, LabDropdownTextListCtrl* textList);
+	void onMouseDown(const GuiEvent &event);
 };
 
-#endif // _GUISWATCHBUTTONCTRL_H_
+class LabDropdownTextListCtrl : public GuiPopupTextListCtrlEx
+{
+private:
+	typedef GuiPopupTextListCtrlEx Parent;
+
+	
+
+protected:
+	LabDropdownCtrl *mPopUpCtrl;
+
+public:
+	LabDropdownTextListCtrl(); // for inheritance
+	LabDropdownTextListCtrl(LabDropdownCtrl *ctrl);
+
+};
+
+class  LabDropdownCtrl : public GuiPopUpMenuCtrlEx
+{
+public:
+	typedef GuiPopUpMenuCtrlEx Parent;
+
+protected:
+
+	/// Window title string.	
+	bool  mExpanded;
+
+
+public:
+
+	DECLARE_CONOBJECT(LabDropdownCtrl);
+	DECLARE_CATEGORY("Gui Containers");
+
+	LabDropdownCtrl();
+	virtual ~LabDropdownCtrl();
+
+
+	static void initPersistFields();
+
+};
+/// @}
+
+
+
+
+#endif

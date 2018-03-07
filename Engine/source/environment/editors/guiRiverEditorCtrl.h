@@ -102,6 +102,7 @@ class GuiRiverEditorCtrl : public EditTSCtrl
       void setSelectedRiver( River *river );
       River* getSelectedRiver() { return mSelRiver; };
       void setSelectedNode( S32 node );
+		S32 getSelectedNode() { return mSelNode; }; //TorqueLab Feature
 
       F32 getNodeWidth();
       void setNodeWidth( F32 width );

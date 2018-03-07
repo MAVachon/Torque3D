@@ -20,52 +20,54 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _GUISWATCHBUTTONCTRL_H_
-#define _GUISWATCHBUTTONCTRL_H_
+#ifndef _LABBOXROLLOUTCTRL_H_
+#define _LABBOXROLLOUTCTRL_H_
 
-#ifndef _GUIBUTTONBASECTRL_H_
-   #include "gui/buttons/guiButtonBaseCtrl.h"
+#ifndef _LABBOXSTACKCTRL_H_
+#include "labBoxStackCtrl.h"
 #endif
 
-
-/// A color swatch button.
+/// Base class for controls that act as containers to other controls.
 ///
-class GuiSwatchButtonCtrl : public GuiButtonBaseCtrl
+/// @addtogroup gui_container_group Containers
+///
+/// @ingroup gui_group Gui System
+/// @{
+class  LabBoxRolloutCtrl : public LabBoxStackCtrl
 {
-   public:
-      
-      typedef GuiButtonBaseCtrl Parent;
+public:
+	typedef LabBoxStackCtrl Parent;
 
-   protected:
-      
-      /// The color to display on the button.
-      LinearColorF mSwatchColor;
-      /// Bitmap used for mGrid
-		StringTableEntry mGridBitmap; //TorqueLab bad bitmap crash fix
-											
-		//String mGridBitmap;
+protected:
 
-      /// Background texture that will show through with transparent colors.
-      GFXTexHandle mGrid;
-      
-   public:
+	/// Window title string.	
+	bool  mExpanded;
+	/// Whether the pane is currently collapsed.
+	bool mCollapsed;
+	Point2I mOriginalExtents;
+	Point2I mThumbSize;
+	S32 mCollapsedHeight;
+public:
 
-      GuiSwatchButtonCtrl();
+	DECLARE_CONOBJECT(LabBoxRolloutCtrl);
+	DECLARE_CATEGORY("Gui Containers");
 
-      /// Return the color displayed in the swatch.
-      LinearColorF getColor() { return mSwatchColor; }
+	LabBoxRolloutCtrl();
+	virtual ~LabBoxRolloutCtrl();
 
-      /// Set the color to display in the swatch.
-      void setColor( const LinearColorF &color ) { mSwatchColor = color; }
 
-      // GuiButtonBaseCtrl
-      virtual bool onWake();
-      virtual void onRender(Point2I offset, const RectI &updateRect);
+	static void initPersistFields();
+	// GuiControl.
+	virtual bool onWake();
+	void setCollapsed(bool isCollapsed);
+	virtual void onMouseDown(const GuiEvent &event);
+	virtual void onMouseUp(const GuiEvent &event);
+	virtual bool resize(const Point2I &newPosition, const Point2I &newExtent);
 
-      static void initPersistFields();
-
-      DECLARE_CONOBJECT( GuiSwatchButtonCtrl );
-      DECLARE_DESCRIPTION( "A color swatch button." );
 };
+/// @}
 
-#endif // _GUISWATCHBUTTONCTRL_H_
+
+
+
+#endif

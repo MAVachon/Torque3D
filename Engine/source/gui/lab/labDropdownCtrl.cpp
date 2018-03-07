@@ -20,52 +20,54 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _GUISWATCHBUTTONCTRL_H_
-#define _GUISWATCHBUTTONCTRL_H_
+#include "platform/platform.h"
+#include "labDropdownCtrl.h"
+#include "gui/core/guiDefaultControlRender.h"
+#include "console/consoleTypes.h"
+#include "console/engineAPI.h"
+#include "gfx/gfxDrawUtil.h"
+#include "gui/core/guiCanvas.h"
+#include "gfx/primBuilder.h"
 
-#ifndef _GUIBUTTONBASECTRL_H_
-   #include "gui/buttons/guiButtonBaseCtrl.h"
-#endif
+
+IMPLEMENT_CONOBJECT(LabDropdownCtrl);
+
+ConsoleDocClass(LabDropdownCtrl,
+	"@brief Brief Desc.\n\n"
+
+	"@tsexample\n"
+	"// Comment:\n"
+	"%okButton = new ClassObject()\n"
+	"instantiation\n"
+	"@endtsexample\n\n"
+
+	"@ingroup GuiContainers"
+	);
 
 
-/// A color swatch button.
-///
-class GuiSwatchButtonCtrl : public GuiButtonBaseCtrl
+//-----------------------------------------------------------------------------
+
+
+LabDropdownCtrl::LabDropdownCtrl()
 {
-   public:
-      
-      typedef GuiButtonBaseCtrl Parent;
+	
+}
 
-   protected:
-      
-      /// The color to display on the button.
-      LinearColorF mSwatchColor;
-      /// Bitmap used for mGrid
-		StringTableEntry mGridBitmap; //TorqueLab bad bitmap crash fix
-											
-		//String mGridBitmap;
+//-----------------------------------------------------------------------------
 
-      /// Background texture that will show through with transparent colors.
-      GFXTexHandle mGrid;
-      
-   public:
+LabDropdownCtrl::~LabDropdownCtrl()
+{
 
-      GuiSwatchButtonCtrl();
+}
 
-      /// Return the color displayed in the swatch.
-      LinearColorF getColor() { return mSwatchColor; }
+//-----------------------------------------------------------------------------
 
-      /// Set the color to display in the swatch.
-      void setColor( const LinearColorF &color ) { mSwatchColor = color; }
+void LabDropdownCtrl::initPersistFields()
+{
+	
+	Parent::initPersistFields();
+}
 
-      // GuiButtonBaseCtrl
-      virtual bool onWake();
-      virtual void onRender(Point2I offset, const RectI &updateRect);
 
-      static void initPersistFields();
+//-----------------------------------------------------------------------------
 
-      DECLARE_CONOBJECT( GuiSwatchButtonCtrl );
-      DECLARE_DESCRIPTION( "A color swatch button." );
-};
-
-#endif // _GUISWATCHBUTTONCTRL_H_

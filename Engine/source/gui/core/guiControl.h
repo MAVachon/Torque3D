@@ -53,7 +53,7 @@
 class GuiCanvas;
 class GuiEditCtrl;
 class GuiWindowCtrl;
-
+class LabWindowCtrl;
 
 DECLARE_SCOPE( GuiAPI );
 
@@ -109,6 +109,7 @@ class GuiControl : public SimGroup
       typedef SimGroup Parent;
       
       friend class GuiWindowCtrl; // mCollapseGroupVec
+	  friend class LabWindowCtrl; // mCollapseGroupVec
       friend class GuiCanvas;
       friend class GuiEditCtrl;
       friend class GuiDragAndDropControl; // drag callbacks
@@ -186,8 +187,12 @@ class GuiControl : public SimGroup
       bool mNotifyChildrenResized;
       
       // Contains array of windows located inside GuiControl
-      typedef Vector< Vector< GuiWindowCtrl *> > CollapseGroupVec;
+      typedef Vector< Vector< GuiWindowCtrl *> > CollapseGroupVec;	 
       CollapseGroupVec mCollapseGroupVec;
+
+	  // Contains array of windows located inside GuiControl
+	  typedef Vector< Vector< LabWindowCtrl *> > CollapseLabGroupVec;
+	  CollapseLabGroupVec mCollapseLabGroupVec;
       
       static bool smDesignTime; ///< static GuiControl boolean that specifies if the GUI Editor is active
       /// @}
@@ -217,7 +222,7 @@ class GuiControl : public SimGroup
       String mAltConsoleCommand;
       
       String mTooltip;
-      
+		StringTableEntry mELink; //(MAV) Embed ELink
       /// @}
       
       /// @name Console

@@ -20,52 +20,37 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _GUISWATCHBUTTONCTRL_H_
-#define _GUISWATCHBUTTONCTRL_H_
+#ifndef _LAB_TREEVIEWCTRL_H
+#define _LAB_TREEVIEWCTRL_H
 
-#ifndef _GUIBUTTONBASECTRL_H_
-   #include "gui/buttons/guiButtonBaseCtrl.h"
+#include "core/bitSet.h"
+#include "math/mRect.h"
+#include "gfx/gFont.h"
+#include "gui/core/guiControl.h"
+#include "gui/core/guiArrayCtrl.h"
+#ifndef _GUI_TREEVIEWCTRL_H
+#include "gui/controls/guiTreeViewCtrl.h"
 #endif
 
+class GuiTextEditCtrl;
 
-/// A color swatch button.
-///
-class GuiSwatchButtonCtrl : public GuiButtonBaseCtrl
+//------------------------------------------------------------------------------
+
+class LabTreeViewCtrl : public GuiTreeViewCtrl
 {
+   private:
+      typedef GuiTreeViewCtrl Parent;
+
+   
+
    public:
-      
-      typedef GuiButtonBaseCtrl Parent;
+      LabTreeViewCtrl();
+      virtual ~LabTreeViewCtrl();
 
-   protected:
-      
-      /// The color to display on the button.
-      LinearColorF mSwatchColor;
-      /// Bitmap used for mGrid
-		StringTableEntry mGridBitmap; //TorqueLab bad bitmap crash fix
-											
-		//String mGridBitmap;
 
-      /// Background texture that will show through with transparent colors.
-      GFXTexHandle mGrid;
-      
-   public:
-
-      GuiSwatchButtonCtrl();
-
-      /// Return the color displayed in the swatch.
-      LinearColorF getColor() { return mSwatchColor; }
-
-      /// Set the color to display in the swatch.
-      void setColor( const LinearColorF &color ) { mSwatchColor = color; }
-
-      // GuiButtonBaseCtrl
-      virtual bool onWake();
-      virtual void onRender(Point2I offset, const RectI &updateRect);
-
-      static void initPersistFields();
-
-      DECLARE_CONOBJECT( GuiSwatchButtonCtrl );
-      DECLARE_DESCRIPTION( "A color swatch button." );
+      DECLARE_CONOBJECT(LabTreeViewCtrl);
+      DECLARE_CATEGORY( "Gui Lists" );
+      DECLARE_DESCRIPTION( "Hierarchical list of text items with optional icons.\nCan also be used to inspect SimObject hierarchies." );
 };
 
-#endif // _GUISWATCHBUTTONCTRL_H_
+#endif

@@ -96,6 +96,10 @@ IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onObjectDeleteCompleted, void, (), (), "" )
 IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onKeyDown, void, ( S32 modifier, S32 keyCode ), ( modifier, keyCode ), "" );
 IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onMouseUp, void, ( S32 hitItemId, S32 mouseClickCount ), ( hitItemId, mouseClickCount ), "" );
 IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onMouseDragged, void, (), (), "" );
+//TorqueLab - Add MiddleMouse callback
+IMPLEMENT_CALLBACK(GuiTreeViewCtrl, onMiddleMouseDown, void, (S32 hitItemId, S32 mouseClickCount), (hitItemId, mouseClickCount), "");
+IMPLEMENT_CALLBACK(GuiTreeViewCtrl, onMiddleMouseUp, void, (S32 itemId, bool onIcon, SimObject* object), (itemId, onIcon, object), "");
+//TorqueLab - Add MiddleMouse callback END
 IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onRightMouseDown, void, ( S32 itemId, const Point2I& mousePos, SimObject* object ), ( itemId, mousePos, object ), "" );
 IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onRightMouseUp, void, ( S32 itemId, const Point2I& mousePos, SimObject* object ), ( itemId, mousePos, object ), "" );
 IMPLEMENT_CALLBACK( GuiTreeViewCtrl, onBeginReparenting, void, (), (), "" );
@@ -2280,7 +2284,57 @@ void GuiTreeViewCtrl::onRemoveSelection( Item *item )
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// TorqueLab Code Modification (MAV) - Faster selection without callbacks
+void GuiTreeViewCtrl::setSelectedItem(S32 itemOrObjectId, bool rebuild, bool scrollTo)
+{
+	if (mDebug)
+		Con::printf("setSelectedItem %i", itemOrObjectId);
 
+	Item* item = _findItemByAmbiguousId(itemOrObjectId);
+
+	// Add Item?
+	if (!item || isSelected(item) || !canAddSelection(item))
+	{
+		// Nope.
+		return;
+	}
+
+	const S32 itemId = item->getID();
+	// Ok, we have an item to select which isn't already selected....
+
+
+	// Add this object id to the vector of selected objectIds
+	// if it is not already.
+	bool foundMatch = false;
+	for (S32 i = 0; i < mSelected.size(); i++)
+	{
+		if (mSelected[i] == itemId)
+			foundMatch = true;
+	}
+	if (!foundMatch)
+		mSelected.push_front(itemId);
+
+	item->mState.set(Item::Selected, true);
+
+
+
+	// Callback Start
+	// Set and add the selection to the selected items group
+	item->mState.set(Item::Selected, true);
+	mSelectedItems.push_front(item);
+
+	// Callback end
+
+	mFlags.set(RebuildVisible);
+	if (scrollTo)
+	{
+		// Also make it so we can see it if we didn't already.
+		scrollVisible(item);
+	}
+}
+// TorqueLab Code Modification (MAV) - Faster selection without callbacks
+//-----------------------------------------------------------------------------
 bool GuiTreeViewCtrl::setItemSelected(S32 itemId, bool select)
 {
    Item * item = getItem(itemId);
@@ -5571,3 +5625,16 @@ DefineEngineMethod(GuiTreeViewCtrl, getItemAtPosition, S32, (Point2I position), 
 {
    return object->getItemAtPosition(position);
 }
+//-----------------------------------------------------------------------------
+// TorqueLab Code Modification (MAV) - Faster selection without callbacks
+DefineEngineMethod(GuiTreeViewCtrl, setSelectedItem, void, (S32 id, bool rebuild, bool scrollto), (true),
+	"Add an item/object to the current selection.\n\n"
+	"@param id ID of item/object to add to the selection.\n"
+	"@param isLastSelection Whether there are more pending items/objects to be added to the selection.  If false, "
+	"the control will defer refreshing the tree and wait until addSelection() is called with this parameter set "
+	"to true.")
+{
+	object->setSelectedItem(id, rebuild, scrollto);
+}
+//-----------------------------------------------------------------------------
+// TorqueLab Code Modification (MAV) - Faster selection without callbacks

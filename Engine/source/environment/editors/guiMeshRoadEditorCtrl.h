@@ -92,6 +92,7 @@ class GuiMeshRoadEditorCtrl : public EditTSCtrl
       void setSelectedRoad( MeshRoad *road );
       MeshRoad* getSelectedRoad() { return mSelRoad; };
       void setSelectedNode( S32 node );
+		S32 getSelectedNode() { return mSelNode; };//TorqueLab Feature
 
       F32 getNodeWidth();
       void setNodeWidth( F32 width );

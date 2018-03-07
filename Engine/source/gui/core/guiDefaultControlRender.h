@@ -42,4 +42,14 @@ void renderSizableBitmapBordersFilledIndex( const RectI &bounds, S32 startIndex,
 void renderFixedBitmapBordersFilled( const RectI &bounds, S32 baseMultiplier, GuiControlProfile *profile); //  Added
 void renderFixedBitmapBordersFilled( const RectI &bounds, S32 startIndex, GuiControlProfile *profile);
 
+// AlterVerse Code Modification (MAV) - Gui Render
+void renderBox(const RectI &boundsRect, GuiControlProfile *profile);
+void renderSizableBox(const RectI &bounds, S32 baseMultiplier, GuiControlProfile *profile);
+// AlterVerse Code Modification (MAV) - Gui Render
+
+//TorqueLab Gui - Universal Gui Render system
+void renderUniBox(const RectI &boundsRect, GuiControlProfile *profile);
+void renderUniBoxFrame(const RectI &boundsRect, S32 startIndex, GuiControlProfile *profile);
+void renderUniBoxBar(const RectI &boundsRect, S32 startIndex, GuiControlProfile *profile);
+//TorqueLab Gui - Universal Gui Render system END
 #endif

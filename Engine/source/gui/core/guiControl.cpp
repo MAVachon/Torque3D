@@ -223,7 +223,7 @@ GuiControl::GuiControl() : mAddGroup( NULL ),
    mConsoleVariable     = StringTable->EmptyString();
    mAcceleratorKey      = StringTable->EmptyString();
    mLangTableName       = StringTable->EmptyString();
-   
+	mELink = StringTable->EmptyString();//(MAV) ELink system builtin
    mTooltip = StringTable->EmptyString();
    mRenderTooltipDelegate.bind( this, &GuiControl::defaultTooltipRender );
 
@@ -292,6 +292,10 @@ void GuiControl::initPersistFields()
             "the global variable $ThisControl." );
       addField("accelerator",       TypeString,       Offset(mAcceleratorKey, GuiControl),
          "Key combination that triggers the control's primary action when the control is on the canvas." );
+
+		//(MAV) ELink system built-in
+		addField("eLink",					TypeString, Offset(mELink, GuiControl),
+			"Custom system to link control together and make it easier to update multiple controls that share same data."); 
 
    endGroup( "Control" );	
    
@@ -699,6 +703,10 @@ bool GuiControl::onAdd()
    if ( mAddGroup == NULL )
       mAddGroup = Sim::getGuiGroup();
    mAddGroup->addObject(this);
+
+	//(MAV) ELink System built-in
+	if (mELink != StringTable->EmptyString() && (isMethod("onAddElink")))	
+			Con::executef(this, "onAddElink");
 
    // If we don't have a profile we must assign one now.
    // Try assigning one based on the control's class name...

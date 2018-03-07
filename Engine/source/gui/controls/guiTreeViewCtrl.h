@@ -310,6 +310,10 @@ class GuiTreeViewCtrl : public GuiArrayCtrl
       DECLARE_CALLBACK( void, onKeyDown, ( S32 modifier, S32 keyCode ) );
       DECLARE_CALLBACK( void, onMouseUp, ( S32 hitItemId, S32 mouseClickCount ) );
       DECLARE_CALLBACK( void, onMouseDragged, () );
+		//TorqueLab - Add MiddleMouse callback
+		DECLARE_CALLBACK(void, onMiddleMouseDown, (S32 hitItemId, S32 mouseClickCount));
+		DECLARE_CALLBACK(void, onMiddleMouseUp, (S32 itemId, bool onIcon, SimObject* object = NULL));
+		//TorqueLab - Add MiddleMouse callback END
       DECLARE_CALLBACK( void, onRightMouseDown, ( S32 itemId, const Point2I& mousePos, SimObject* object = NULL ) );
       DECLARE_CALLBACK( void, onRightMouseUp, ( S32 itemId, const Point2I& mousePos, SimObject* object = NULL ) );
       DECLARE_CALLBACK( void, onBeginReparenting, () );
@@ -479,6 +483,10 @@ class GuiTreeViewCtrl : public GuiArrayCtrl
       void addSelection(S32 itemId, bool update = true, bool isLastSelection = true);
       const Vector< Item* >& getSelectedItems() const { return mSelectedItems; }
       const Vector< S32 >& getSelected() const { return mSelected; }
+
+		// TorqueLab Code Modification (MAV) - Faster selection without callbacks
+		void setSelectedItem(S32 itemId, bool rebuild = false, bool scrollTo = false);
+		// TorqueLab Code Modification (MAV) - Faster selection without callbacks
 
       bool isSelected(S32 itemId)
       {

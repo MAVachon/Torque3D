@@ -1277,3 +1277,13 @@ DefineConsoleMethod( GuiMeshRoadEditorCtrl, matchTerrainToRoad, void, (), , "" )
 {
    object->matchTerrainToRoad();
 }
+//TorqueLab Feature
+DefineConsoleMethod(GuiMeshRoadEditorCtrl, setSelectedNode, void, (S32 node), , "")
+{
+	object->setSelectedNode(node);
+}
+DefineConsoleMethod(GuiMeshRoadEditorCtrl, getSelectedNode, S32, (), , "")
+{
+	return object->getSelectedNode();
+}
+//TorqueLab Feature End

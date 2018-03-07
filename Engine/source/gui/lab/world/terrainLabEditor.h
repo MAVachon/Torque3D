@@ -20,52 +20,49 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _GUISWATCHBUTTONCTRL_H_
-#define _GUISWATCHBUTTONCTRL_H_
+#ifndef _TERRAINLABEDITOR_H_
+#define _TERRAINLABEDITOR_H_
 
-#ifndef _GUIBUTTONBASECTRL_H_
-   #include "gui/buttons/guiButtonBaseCtrl.h"
+#ifndef _EDITLABTSCTRL_H_
+#include "gui/lab/world/editLabTSCtrl.h"
+#endif
+#ifndef _TERRAINEDITOR_H_
+#include "gui/worldEditor/terrainEditor.h"
+#endif
+#ifndef _TERRDATA_H_
+#include "terrain/terrData.h"
+#endif
+#ifndef _UNDO_H_
+#include "util/undo.h"
 #endif
 
 
-/// A color swatch button.
-///
-class GuiSwatchButtonCtrl : public GuiButtonBaseCtrl
+
+
+
+
+class TerrainLabEditor : public TerrainEditor
 {
-   public:
-      
-      typedef GuiButtonBaseCtrl Parent;
+	// XA: This methods where added to replace the friend consoleMethods.
+	public:
+		
+      void autoMaterialLayer( F32 mMinHeight, F32 mMaxHeight, F32 mMinSlope, F32 mMaxSlope, F32 mCoverage );
 
-   protected:
-      
-      /// The color to display on the button.
-      LinearColorF mSwatchColor;
-      /// Bitmap used for mGrid
-		StringTableEntry mGridBitmap; //TorqueLab bad bitmap crash fix
-											
-		//String mGridBitmap;
+	private:	
 
-      /// Background texture that will show through with transparent colors.
-      GFXTexHandle mGrid;
-      
+     
+
    public:
 
-      GuiSwatchButtonCtrl();
+      TerrainLabEditor();
+      ~TerrainLabEditor();
 
-      /// Return the color displayed in the swatch.
-      LinearColorF getColor() { return mSwatchColor; }
+    
 
-      /// Set the color to display in the swatch.
-      void setColor( const LinearColorF &color ) { mSwatchColor = color; }
 
-      // GuiButtonBaseCtrl
-      virtual bool onWake();
-      virtual void onRender(Point2I offset, const RectI &updateRect);
-
-      static void initPersistFields();
-
-      DECLARE_CONOBJECT( GuiSwatchButtonCtrl );
-      DECLARE_DESCRIPTION( "A color swatch button." );
+      DECLARE_CONOBJECT(TerrainLabEditor);     
 };
 
-#endif // _GUISWATCHBUTTONCTRL_H_
+
+
+#endif
