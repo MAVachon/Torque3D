@@ -2794,3 +2794,211 @@ DefineEngineFunction( getMaxDynamicVerts, S32, (),,
 {
    return MAX_DYNAMIC_VERTS / 2;
 }
+//-----------------------------------------------------------------------------
+// (MAV) - Comma/Bar Words functions (from AlterVerse Code Modification (MAR))
+DefineConsoleFunction(getBarWord, const char*, (const char* text, S32 index), ,
+	"Extract the bar (|) word at the given @a index in the bar (|) list in @a text.\n"
+	"Words in @a text must be separated by bar (|).\n"
+	"@param text A bar (|) list of words.\n"
+	"@param index The zero-based index of the word to extract.\n"
+	"@return The word at the given index or \"\" if the index is out of range.\n\n"
+	"@tsexample\n"
+	"getWord( \"a b c\", 1 ) // Returns \"b\"\n"
+	"@endtsexample\n\n"
+	"@see getWords\n"
+	"@see getWordCount\n"
+	"@see getField\n"
+	"@see getRecord\n"
+	"@ingroup FieldManip")
+{
+	return Con::getReturnBuffer(StringUnit::getUnit(text, index, "|\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(getBarWords, const char*, (const char* text, S32 startIndex, S32 endIndex), (-1),
+	"Extract a range of bar words (|) from the given @a startIndex onwards thru @a endIndex.\n"
+	"Words in @a text must be separated by bar (|).\n"
+	"@param text A bar (|) list of words.\n"
+	"@param startIndex The zero-based index of the first word to extract from @a text.\n"
+	"@param endIndex The zero-based index of the last word to extract from @a text.  If this is -1, all words beginning "
+	"with @a startIndex are extracted from @a text.\n"
+	"@return A string containing the specified range of words from @a text or \"\" if @a startIndex "
+	"is out of range or greater than @a endIndex.\n\n"
+	"@tsexample\n"
+	"getWords( \"a b c d\", 1, 2, ) // Returns \"b c\"\n"
+	"@endtsexample\n\n"
+	"@see getBarWord\n"
+	"@see getBarWordCount\n"
+	"@ingroup FieldManip")
+{
+	if (endIndex < 0)
+		endIndex = 1000000;
+
+	return Con::getReturnBuffer(StringUnit::getUnits(text, startIndex, endIndex, "|\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(setBarWord, const char*, (const char* text, S32 index, const char* replacement), ,
+	"Replace the bar (|) word in @a text at the given @a index with @a replacement.\n"
+	"Words in @a text must be separated by bar (|).\n"
+	"@param text A bar (|) list of words.\n"
+	"@param index The zero-based index of the word to replace.\n"
+	"@param replacement The string with which to replace the word.\n"
+	"@return A new string with the word at the given @a index replaced by @a replacement or the original "
+	"string if @a index is out of range.\n\n"
+	"@tsexample\n"
+	"setWord( \"a b c d\", 2, \"f\" ) // Returns \"a b f d\"\n"
+	"@endtsexample\n\n"
+	"@see getWord\n"
+	"@see setField\n"
+	"@see setRecord\n"
+	"@ingroup FieldManip")
+{
+	return Con::getReturnBuffer(StringUnit::setUnit(text, index, replacement, "|\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(removeBarWord, const char*, (const char* text, S32 index), ,
+	"Remove the bar (|) word in @a text at the given @a index.\n"
+	"Words in @a text must be separated by bar (|).\n"
+	"@param text A bar (|) list of words.\n"
+	"@param index The zero-based index of the word in @a text.\n"
+	"@return A new string with the word at the given index removed or the original string if @a index is "
+	"out of range.\n\n"
+	"@tsexample\n"
+	"removeBarWord( \"a|b|c|d\", 2 ) // Returns \"a|b|d\"\n"
+	"@endtsexample\n\n"
+	"@see removeToken\n"
+	"@see removeField\n"
+	"@see removeRecord\n"
+	"@ingroup FieldManip")
+{
+	return Con::getReturnBuffer(StringUnit::removeUnit(text, index, "|\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(getBarWordCount, S32, (const char* text), ,
+	"Return the number of bar (|) words in @a text.\n"
+	"Words in @a text must be separated by bar (|).\n"
+	"@param text A bar (|) list of words.\n"
+	"@return The number of bar (|) words in @a text.\n\n"
+	"@tsexample\n"
+	"getWordCount( \"a|b|c|d|e\" ) // Returns 5\n"
+	"@endtsexample\n\n"
+	"@see getFieldCount\n"
+	"@see getRecordCount\n"
+	"@ingroup FieldManip")
+{
+	return StringUnit::getUnitCount(text, "|\t\n");
+}
+//-----------------------------------------------------------------------------
+// CommaWord Functions - Manage comma string index
+//-----------------------------------------------------------------------------
+DefineConsoleFunction(getCommaWord, const char*, (const char* text, S32 index), ,
+	"Extract the word at the given @a index in the comma-separated list in @a text.\n"
+	"Words in @a text must be separated by comma.\n"
+	"@param text A comma-separated list of words.\n"
+	"@param index The zero-based index of the word to extract.\n"
+	"@return The word at the given index or \"\" if the index is out of range.\n\n"
+	"@tsexample\n"
+	"getWord( \"a b c\", 1 ) // Returns \"b\"\n"
+	"@endtsexample\n\n"
+	"@see getWords\n"
+	"@see getWordCount\n"
+	"@see getField\n"
+	"@see getRecord\n"
+	"@ingroup FieldManip")
+{
+	return Con::getReturnBuffer(StringUnit::getUnit(text, index, ",\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(getCommaWords, const char*, (const char* text, S32 startIndex, S32 endIndex), (-1),
+	"Extract a range of words from the given @a startIndex onwards thru @a endIndex.\n"
+	"Words in @a text must be separated by comma.\n"
+	"@param text A comma-separated list of words.\n"
+	"@param startIndex The zero-based index of the first word to extract from @a text.\n"
+	"@param endIndex The zero-based index of the last word to extract from @a text.  If this is -1, all words beginning "
+	"with @a startIndex are extracted from @a text.\n"
+	"@return A string containing the specified range of words from @a text or \"\" if @a startIndex "
+	"is out of range or greater than @a endIndex.\n\n"
+	"@tsexample\n"
+	"getWords( \"a b c d\", 1, 2, ) // Returns \"b c\"\n"
+	"@endtsexample\n\n"
+	"@see getWord\n"
+	"@see getWordCount\n"
+	"@see getTokens\n"
+	"@see getFields\n"
+	"@see getRecords\n"
+	"@ingroup FieldManip")
+{
+	if (endIndex < 0)
+		endIndex = 1000000;
+
+	return Con::getReturnBuffer(StringUnit::getUnits(text, startIndex, endIndex, ",\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(setCommaWord, const char*, (const char* text, S32 index, const char* replacement), ,
+	"Replace the comma word in @a text at the given @a index with @a replacement.\n"
+	"Words in @a text must be separated by comma.\n"
+	"@param text A comma-separated list of words.\n"
+	"@param index The zero-based index of the word to replace.\n"
+	"@param replacement The string with which to replace the word.\n"
+	"@return A new string with the word at the given @a index replaced by @a replacement or the original "
+	"string if @a index is out of range.\n\n"
+	"@tsexample\n"
+	"setCommaWord( \"a,b,c,d\", 2, \"f\" ) // Returns \"a,b,f,d\"\n"
+	"@endtsexample\n\n"
+	"@see getWord\n"
+	"@see setToken\n"
+	"@see setField\n"
+	"@see setRecord\n"
+	"@ingroup FieldManip")
+{
+	return Con::getReturnBuffer(StringUnit::setUnit(text, index, replacement, ",\t\n"));
+}
+
+//-----------------------------------------------------------------------------
+
+DefineConsoleFunction(removeCommaWord, const char*, (const char* text, S32 index), ,
+	"Remove the comma word in @a text at the given @a index.\n"
+	"Words in @a text must be separated by comma.\n"
+	"@param text A comma-separated list of words.\n"
+	"@param index The zero-based index of the word in @a text.\n"
+	"@return A new string with the word at the given index removed or the original string if @a index is "
+	"out of range.\n\n"
+	"@tsexample\n"
+	"removeCommaWord( \"a b c d\", 2 ) // Returns \"a b d\"\n"
+	"@endtsexample\n\n"
+	"@see removeToken\n"
+	"@see removeField\n"
+	"@see removeRecord\n"
+	"@ingroup FieldManip")
+{
+	return Con::getReturnBuffer(StringUnit::removeUnit(text, index, ",\t\n"));
+}
+
+
+//-----------------------------------------------------------------------------
+DefineConsoleFunction(getCommaWordCount, S32, (const char* text), ,
+	"Return the number of comma-separated words in @a text.\n"
+	"Words in @a text must be separated by comma.\n"
+	"@param text A comma-separated list of words.\n"
+	"@return The number of comma-separated words in @a text.\n\n"
+	"@tsexample\n"
+	"getCommaWordCount( \"a b c d e\" ) // Returns 5\n"
+	"@endtsexample\n\n"
+	"@see getFieldCount\n"
+	"@see getRecordCount\n"
+	"@ingroup FieldManip")
+{
+	return StringUnit::getUnitCount(text, ",\t\n");
+}
+// (MAV) - Comma/Bar Words functions (from AlterVerse Code Modification (MAR)) END
