@@ -490,4 +490,49 @@ public:
    SimObject* operator++();
 };
 
+//TorqueLab SimContainer
+//---------------------------------------------------------------------------
+/// A group of SimObjects.
+///
+/// A SimGroup is a stricter form of SimSet. SimObjects may only be a member
+/// of a single SimGroup at a time.
+///
+/// The SimGroup will automatically enforce the single-group-membership rule.
+///
+/// @code
+///      // From engine/sim/simPath.cc - getting a pointer to a SimGroup
+///      SimGroup* pMissionGroup = dynamic_cast<SimGroup*>(Sim::findObject("MissionGroup"));
+///
+///      // From game/trigger.cc:46 - iterating over a SimObject's group.
+///      SimObject* trigger = ...;
+///      SimGroup* pGroup = trigger->getGroup();
+///      for (SimGroup::iterator itr = pGroup->begin(); itr != pGroup->end(); itr++)
+///      {
+///         // do something with *itr
+///      }
+/// @endcode
+class SimContainer : public SimGroup
+{
+
+public:
+
+	typedef SimGroup Parent;
+
+	friend class SimManager;
+	friend class SimObject;
+
+private:
+
+	SimNameDictionary mNameDictionary;
+
+
+public:
+
+	~SimContainer();
+
+
+
+	DECLARE_CONOBJECT(SimContainer);
+};
+//TorqueLab SimContainer end
 #endif // _SIMSET_H_

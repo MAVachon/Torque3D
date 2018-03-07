@@ -3676,7 +3676,43 @@ void GuiTreeViewCtrl::onMiddleMouseDown(const GuiEvent & event)
       S32 yDiff = currentY-midpCell;
       Con::printf("cell info: (%d,%d) mCurrentDragCell=%d est=(%d,%d,%d) ydiff=%d",pt.x,pt.y,mCurrentDragCell,mCurrentDragCell*mItemHeight, midpCell, (mCurrentDragCell+1)*mItemHeight,yDiff);
    }
+	//TorqueLab - Add MiddleMouseDown callback
+	BitSet32 hitFlags = 0;
+	Item* item;
+
+	S32 hitItemId = -1;
+	if (!_hitTest(event.mousePoint, item, hitFlags))
+		return;
+
+	hitItemId = item->mId;
+
+	onMiddleMouseDown_callback(hitItemId, event.mouseClickCount);
+	//TorqueLab - Add MiddleMouseDown callback END
 }
+//TorqueLab - Add MiddleMouseUp callback
+void GuiTreeViewCtrl::onMiddleMouseUp(const GuiEvent & event)
+{
+	Item *item = NULL;
+	BitSet32 hitFlags;
+
+	if (!_hitTest(event.mousePoint, item, hitFlags))
+		return;
+
+	if (hitFlags.test(OnText) || hitFlags.test(OnIcon))
+	{
+		//Return itemId and if the click is made on icon (for inspectData third arg is object)
+		if (item->isInspectorData() && item->getObject())
+			onMiddleMouseUp_callback(item->mId, hitFlags.test(OnIcon), item->getObject());
+		else
+			onMiddleMouseUp_callback(item->mId, hitFlags.test(OnIcon));
+	}
+	else
+	{
+		clearSelection();
+	}
+}
+//TorqueLab - Add MiddleMouseUp callback END
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 

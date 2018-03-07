@@ -589,6 +589,7 @@ class GuiTreeViewCtrl : public GuiArrayCtrl
       bool onKeyDown( const GuiEvent &event );
 		void onMouseDown(const GuiEvent &event);
       void onMiddleMouseDown(const GuiEvent &event);
+		void onMiddleMouseUp(const GuiEvent &event);//TorqueLab (MAV) Enhanced Mouse interaction
       void onMouseMove(const GuiEvent &event);
       void onMouseEnter(const GuiEvent &event);
       void onMouseLeave(const GuiEvent &event);

@@ -100,7 +100,49 @@ ConsoleDocClass( SimGroup,
    "@ingroup Console\n"
    "@ingroup Scripting"
 );
+//TorqueLab - SimContainer
+IMPLEMENT_CONOBJECT(SimContainer);
+ConsoleDocClass(SimContainer,
+	"@brief A collection of SimObjects that are owned by the group.\n\n"
 
+	"A SimGroup is a stricter form of SimSet. SimObjects may only be a member "
+	"of a single SimGroup at a time. The SimGroup will automatically enforce "
+	"the single-group-membership rule (ie. adding an object to a SimGroup will "
+	"cause it to be removed from its current SimGroup, if any).\n\n"
+
+	"Deleting a SimGroup will also delete all SimObjects in the SimGroup.\n\n"
+
+	"@tsexample\n"
+	"// Create a SimGroup for particle emitters\n"
+	"new SimGroup(Emitters)\n"
+	"{\n"
+	"   canSaveDynamicFields = \"1\";\n\n"
+	"   new ParticleEmitterNode(CrystalEmmiter) {\n"
+	"      active = \"1\";\n"
+	"      emitter = \"dustEmitter\";\n"
+	"      velocity = \"1\";\n"
+	"      dataBlock = \"GenericSmokeEmitterNode\";\n"
+	"      position = \"-61.6276 2.1142 4.45027\";\n"
+	"      rotation = \"1 0 0 0\";\n"
+	"      scale = \"1 1 1\";\n"
+	"      canSaveDynamicFields = \"1\";\n"
+	"   };\n\n"
+	"   new ParticleEmitterNode(Steam1) {\n"
+	"      active = \"1\";\n"
+	"      emitter = \"SlowSteamEmitter\";\n"
+	"      velocity = \"1\";\n"
+	"      dataBlock = \"GenericSmokeEmitterNode\";\n"
+	"      position = \"-25.0458 1.55289 2.51308\";\n"
+	"      rotation = \"1 0 0 0\";\n"
+	"      scale = \"1 1 1\";\n"
+	"      canSaveDynamicFields = \"1\";\n"
+	"   };\n"
+	"};\n\n"
+	"@endtsexample\n\n"
+	"@ingroup Console\n"
+	"@ingroup Scripting"
+);
+//TorqueLab - SimContainer end
 IMPLEMENT_CALLBACK( SimSet, onObjectAdded, void, ( SimObject* object ), ( object ),
    "Called when an object is added to the set.\n"
    "@param object The object that was added." );
@@ -865,7 +907,20 @@ SimObject* SimGroupIterator::operator++()
    }
    return *stack.last().itr;
 }
+//TorqueLab SimContainer
+//=============================================================================
+//    SimContainer.
+//=============================================================================
+// MARK: ---- SimGroup ----
 
+//-----------------------------------------------------------------------------
+
+SimContainer::~SimContainer()
+{
+	for (iterator itr = begin(); itr != end(); itr++)
+		mNameDictionary.remove(*itr);
+}
+//TorqueLab SimContainer End
 //=============================================================================
 //    API.
 //=============================================================================
