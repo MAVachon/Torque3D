@@ -105,7 +105,7 @@ ConsoleDocClass( HTTPObject,
 
       "// Send the GET command\n"
       "%feed.get(\"www.google.com:80\", \"/ig/api\", \"weather=Las-Vegas,US\");\n"
-	"@endtsexample\n\n" 
+   "@endtsexample\n\n" 
    
    "@see TCPObject\n"
 
@@ -154,29 +154,29 @@ IMPLEMENT_CALLBACK(HTTPObject, onDisconnect, void, (),(),
 
 HTTPObject::HTTPObject()
 {
-	mCURL = curl_easy_init();
-	curl_easy_setopt(mCURL, CURLOPT_VERBOSE, false);
-	curl_easy_setopt(mCURL, CURLOPT_FOLLOWLOCATION, true);
-	curl_easy_setopt(mCURL, CURLOPT_TRANSFERTEXT, true);
-	curl_easy_setopt(mCURL, CURLOPT_USERAGENT, TORQUE_APP_NAME " " TORQUE_APP_VERSION_STRING);
-	curl_easy_setopt(mCURL, CURLOPT_ENCODING, "UTF-8");
+   mCURL = curl_easy_init();
+   curl_easy_setopt(mCURL, CURLOPT_VERBOSE, false);
+   curl_easy_setopt(mCURL, CURLOPT_FOLLOWLOCATION, true);
+   curl_easy_setopt(mCURL, CURLOPT_TRANSFERTEXT, true);
+   curl_easy_setopt(mCURL, CURLOPT_USERAGENT, TORQUE_APP_NAME " " TORQUE_APP_VERSION_STRING);
+   curl_easy_setopt(mCURL, CURLOPT_ENCODING, "UTF-8");
    curl_easy_setopt(mCURL, CURLOPT_WRITEDATA, this);
    curl_easy_setopt(mCURL, CURLOPT_WRITEFUNCTION, &HTTPObject::writeCallback);
 
    mBuffer = NULL;
    mBufferSize = 0;
    mBufferUsed = 0;
+   mHeaders = NULL;
 }
 
 HTTPObject::~HTTPObject()
 {
-	curl_easy_cleanup(mCURL);
+   curl_easy_cleanup(mCURL);
 }
 
 //--------------------------------------
 
-class CURLFinishEvent : public SimEvent
-{
+class CURLFinishEvent : public SimEvent {
 public:
    virtual void process(SimObject *object) {
       static_cast<HTTPObject *>(object)->process();
@@ -236,10 +236,17 @@ size_t HTTPObject::processData(char *buffer, size_t size, size_t nitems) {
 }
 
 void HTTPObject::process() {
+   if (mResponseCode != CURLE_OK) {
+      onConnectFailed_callback();
+      return;
+   }
+
+   onConnected_callback();
+
    //Pull all the lines out of mBuffer
    char *str = (char *)mBuffer;
-   char *nextLine;
-   do {
+   char *nextLine = str;
+   while (str && nextLine) {
       nextLine = dStrchr(str, '\n');
 
       //Get how long the current line for allocating
@@ -266,97 +273,147 @@ void HTTPObject::process() {
          //Strip the \n
          str = nextLine + 1;
       }
-   } while (nextLine);
+   }
 
    //Clean up
    dFree(mBuffer);
    mBuffer = NULL;
    mBufferUsed = 0;
    mBufferSize = 0;
+
+   onDisconnect_callback();
 }
 
 //--------------------------------------
-void HTTPObject::get(const char *host, const char *path, const char *query)
-{
-   dsize_t urlLength = dStrlen(host) + dStrlen(path) + 2;
-   if (query) {
-      urlLength += dStrlen(query);
-   }
-	char *url = new char[urlLength];
-	dSprintf(url, urlLength, "%s%s%s%s", host, path, (query ? "?" : ""), (query ? query : ""));
-	curl_easy_setopt(mCURL, CURLOPT_URL, url);
-
-	start();
-}
-
-void HTTPObject::post(const char *host, const char *path, const char *query, const char *post)
-{
+void HTTPObject::get(const char *host, const char *path, const char *query) {
    dsize_t urlLength = dStrlen(host) + dStrlen(path) + 2;
    if (query) {
       urlLength += dStrlen(query);
    }
    char *url = new char[urlLength];
-   dSprintf(url, urlLength, "%s%s%s%s", host, path, (query ? "?" : ""), (query ? query : ""));
+   dSprintf(url, urlLength, "%s%s%s%s", host, path, (query && *query ? "?" : ""), (query && *query ? query : ""));
    curl_easy_setopt(mCURL, CURLOPT_URL, url);
-
-   curl_easy_setopt(mCURL, CURLOPT_POST, true);
-   curl_easy_setopt(mCURL, CURLOPT_POSTFIELDS, post);
+   if (mHeaders) {
+      curl_easy_setopt(mCURL, CURLOPT_HTTPHEADER, mHeaders);
+   }
 
    start();
 }
 
+void HTTPObject::post(const char *host, const char *path, const char *query, const char *post) {
+   dsize_t urlLength = dStrlen(host) + dStrlen(path) + 2;
+   if (query) {
+      urlLength += dStrlen(query);
+   }
+   char *url = new char[urlLength];
+   dSprintf(url, urlLength, "%s%s%s%s", host, path, (query && *query ? "?" : ""), (query && *query ? query : ""));
+   curl_easy_setopt(mCURL, CURLOPT_URL, url);
+
+   curl_easy_setopt(mCURL, CURLOPT_POST, true);
+   curl_easy_setopt(mCURL, CURLOPT_POSTFIELDS, post);
+   if (mHeaders) {
+      curl_easy_setopt(mCURL, CURLOPT_HTTPHEADER, mHeaders);
+   }
+
+   start();
+}
+
+void HTTPObject::setHeader(const char *name, const char *value) {
+   dsize_t headerSize = dStrlen(name) + 3;
+   if (value != NULL) {
+      headerSize += dStrlen(value);
+   }
+   char *header = Con::getReturnBuffer(headerSize);
+   if (value == NULL) {
+      //Unset
+      dSprintf(header, headerSize, "%s:", name);
+   } else if (*value == 0) {
+      //Empty value
+      dSprintf(header, headerSize, "%s;", name);
+   } else {
+      //Given value
+      dSprintf(header, headerSize, "%s: %s", name, value);
+   }
+
+   //Formatting: Replace spaces with hyphens
+   dsize_t nameLen = dStrlen(name);
+   for (U32 i = 0; i < nameLen; i ++) {
+      if (header[i] == ' ')
+         header[i] = '-';
+   }
+
+   mHeaders = curl_slist_append(mHeaders, header);
+}
+
 //--------------------------------------
-DefineEngineMethod( HTTPObject, get, void, ( const char* Address, const char* requirstURI, const char* query ), ( "" ),
+DefineEngineMethod(HTTPObject, get, void, (const char *address, const char* requirstURI, const char *query), ("/", ""),
    "@brief Send a GET command to a server to send or retrieve data.\n\n"
 
-   "@param Address HTTP web address to send this get call to. Be sure to include the port at the end (IE: \"www.garagegames.com:80\").\n"
+   "@param address HTTP web address to send this get call to. Be sure to include the port at the end (IE: \"www.garagegames.com:80\").\n"
    "@param requirstURI Specific location on the server to access (IE: \"index.php\".)\n"
    "@param query Optional. Actual data to transmit to the server. Can be anything required providing it sticks with limitations of the HTTP protocol. "
    "If you were building the URL manually, this is the text that follows the question mark.  For example: http://www.google.com/ig/api?<b>weather=Las-Vegas,US</b>\n"
    
    "@tsexample\n"
-	   "// Create an HTTP object for communications\n"
-	   "%httpObj = new HTTPObject();\n\n"
-	   "// Specify a URL to transmit to\n"
+      "// Create an HTTP object for communications\n"
+      "%httpObj = new HTTPObject();\n\n"
+      "// Specify a URL to transmit to\n"
       "%url = \"www.garagegames.com:80\";\n\n"
-	   "// Specify a URI to communicate with\n"
-	   "%URI = \"/index.php\";\n\n"
-	   "// Specify a query to send.\n"
-	   "%query = \"\";\n\n"
-	   "// Send the GET command to the server\n"
-	   "%httpObj.get(%url,%URI,%query);\n"
+      "// Specify a URI to communicate with\n"
+      "%URI = \"/index.php\";\n\n"
+      "// Specify a query to send.\n"
+      "%query = \"\";\n\n"
+      "// Send the GET command to the server\n"
+      "%httpObj.get(%url,%URI,%query);\n"
    "@endtsexample\n\n"
    )
 {
-   if( !query || !query[ 0 ] )
-		object->get(Address, requirstURI, NULL);
+   if (!query || !query[0])
+      object->get(address, requirstURI, NULL);
    else
-		object->get(Address, requirstURI, query);
+      object->get(address, requirstURI, query);
 }
 
-DefineEngineMethod( HTTPObject, post, void, ( const char* Address, const char* requirstURI, const char* query, const char* post ),,
+DefineEngineMethod(HTTPObject, post, void, (const char *address, const char *requirstURI, const char *query, const char *post), ("/", "", ""),
    "@brief Send POST command to a server to send or retrieve data.\n\n"
 
-   "@param Address HTTP web address to send this get call to. Be sure to include the port at the end (IE: \"www.garagegames.com:80\").\n"
+   "@param address HTTP web address to send this get call to. Be sure to include the port at the end (IE: \"www.garagegames.com:80\").\n"
    "@param requirstURI Specific location on the server to access (IE: \"index.php\".)\n"
    "@param query Actual data to transmit to the server. Can be anything required providing it sticks with limitations of the HTTP protocol. \n"
    "@param post Submission data to be processed.\n"
 
    "@tsexample\n"
-	   "// Create an HTTP object for communications\n"
-	   "%httpObj = new HTTPObject();\n\n"
-	   "// Specify a URL to transmit to\n"
+      "// Create an HTTP object for communications\n"
+      "%httpObj = new HTTPObject();\n\n"
+      "// Specify a URL to transmit to\n"
       "%url = \"www.garagegames.com:80\";\n\n"
-	   "// Specify a URI to communicate with\n"
-	   "%URI = \"/index.php\";\n\n"
-	   "// Specify a query to send.\n"
-	   "%query = \"\";\n\n"
-	   "// Specify the submission data.\n"
-	   "%post = \"\";\n\n"
-	   "// Send the POST command to the server\n"
-	   "%httpObj.POST(%url,%URI,%query,%post);\n"
+      "// Specify a URI to communicate with\n"
+      "%URI = \"/index.php\";\n\n"
+      "// Specify a query to send.\n"
+      "%query = \"\";\n\n"
+      "// Specify the submission data.\n"
+      "%post = \"\";\n\n"
+      "// Send the POST command to the server\n"
+      "%httpObj.POST(%url,%URI,%query,%post);\n"
    "@endtsexample\n\n"
    )
 {
-   object->post(Address, requirstURI, query, post);
+   object->post(address, requirstURI, query, post);
+}
+
+DefineEngineMethod(HTTPObject, setHeader, void, (const char *name, const char *value), (""),
+   "@brief Set a custom HTTP header to send with the request. Needs to be called before get() or post()\n\n"
+   "@param name Header name\n"
+   "@param value Header contents\n"
+
+   "@tsexample\n"
+      "// Create an HTTP object for communications\n"
+      "%httpObj = new HTTPObject();\n\n"
+      "// Set a custom HTTP header\n"
+      "%httpObj.setHeader(\"Special-Data\", \"Contents\");\n"
+      "%httpObj.get(...);\n"
+   "@endtsexample\n\n"
+   )
+{
+   object->setHeader(name, value);
 }

@@ -37,23 +37,24 @@
 class HTTPObject : public SimObject
 {
 public:
-	DECLARE_CALLBACK(void, onLine, (const char* line));
+   DECLARE_CALLBACK(void, onLine, (const char* line));
    DECLARE_CALLBACK(bool, onPacket, (const char* data));
-//	DECLARE_CALLBACK(void, onEndReceive, ());
-//	DECLARE_CALLBACK(void, onDNSResolved,());
-//	DECLARE_CALLBACK(void, onDNSFailed, ());
-	DECLARE_CALLBACK(void, onConnected, ());
-	DECLARE_CALLBACK(void, onConnectFailed, ());
-	DECLARE_CALLBACK(void, onDisconnect, ());
+   // DECLARE_CALLBACK(void, onEndReceive, ());
+   // DECLARE_CALLBACK(void, onDNSResolved,());
+   // DECLARE_CALLBACK(void, onDNSFailed, ());
+   DECLARE_CALLBACK(void, onConnected, ());
+   DECLARE_CALLBACK(void, onConnectFailed, ());
+   DECLARE_CALLBACK(void, onDisconnect, ());
 
 private:
    typedef SimObject Parent;
    friend class CURLFinishEvent;
 
 protected:
-	CURL *mCURL;
-	std::thread *mThread;
+   CURL *mCURL;
+   std::thread *mThread;
    CURLcode mResponseCode;
+   curl_slist *mHeaders;
 
    U8 *mBuffer;
    U32 mBufferSize;
@@ -69,6 +70,7 @@ protected:
 public:
    void get(const char *hostName, const char *urlName, const char *query);
    void post(const char *host, const char *path, const char *query, const char *post);
+   void setHeader(const char *name, const char *value);
    HTTPObject();
    virtual ~HTTPObject();
 
