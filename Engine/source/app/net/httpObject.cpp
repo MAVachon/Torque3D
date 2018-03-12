@@ -27,6 +27,7 @@
 #include "console/simBase.h"
 #include "console/consoleInternal.h"
 #include "console/engineAPI.h"
+#include "core/strings/stringUnit.h"
 
 IMPLEMENT_CONOBJECT(HTTPObject);
 
@@ -111,300 +112,197 @@ ConsoleDocClass( HTTPObject,
    "@ingroup Networking\n"
 );
 
+
+IMPLEMENT_CALLBACK(HTTPObject, onLine, void, (const char* line), (line),
+   "@brief Called whenever a line of data is sent to this TCPObject.\n\n"
+   "This callback is called when the received data contains a newline @\\n character, or "
+   "the connection has been disconnected and the TCPObject's buffer is flushed.\n"
+   "@param line Data sent from the server.\n"
+   );
+
+IMPLEMENT_CALLBACK(HTTPObject, onPacket, bool, (const char* data), (data),
+   "@brief Called when we get a packet with no newlines or nulls (probably websocket).\n\n"
+   "@param data Data sent from the server.\n"
+   "@return true if script handled the packet.\n"
+   );
+
+//IMPLEMENT_CALLBACK(HTTPObject, onEndReceive, void, (), (),
+//   "@brief Called when we are done reading all lines.\n\n"
+//   );
+//
+//IMPLEMENT_CALLBACK(HTTPObject, onDNSResolved, void, (),(),
+//   "Called whenever the DNS has been resolved.\n"
+//   );
+//
+//IMPLEMENT_CALLBACK(HTTPObject, onDNSFailed, void, (),(),
+//   "Called whenever the DNS has failed to resolve.\n"
+//   );
+
+IMPLEMENT_CALLBACK(HTTPObject, onConnected, void, (),(),
+   "Called whenever a connection is established with a server.\n"
+   );
+
+IMPLEMENT_CALLBACK(HTTPObject, onConnectFailed, void, (),(),
+   "Called whenever a connection has failed to be established with a server.\n"
+   );
+
+IMPLEMENT_CALLBACK(HTTPObject, onDisconnect, void, (),(),
+   "Called whenever the TCPObject disconnects from whatever it is currently connected to.\n"
+   );
+
 //--------------------------------------
 
 HTTPObject::HTTPObject()
 {
-   mHostName = 0;
-   mPath = 0;
-   mQuery = 0;
-   mPost = 0;
-   mBufferSave = 0;
+	mCURL = curl_easy_init();
+	curl_easy_setopt(mCURL, CURLOPT_VERBOSE, false);
+	curl_easy_setopt(mCURL, CURLOPT_FOLLOWLOCATION, true);
+	curl_easy_setopt(mCURL, CURLOPT_TRANSFERTEXT, true);
+	curl_easy_setopt(mCURL, CURLOPT_USERAGENT, TORQUE_APP_NAME " " TORQUE_APP_VERSION_STRING);
+	curl_easy_setopt(mCURL, CURLOPT_ENCODING, "UTF-8");
+   curl_easy_setopt(mCURL, CURLOPT_WRITEDATA, this);
+   curl_easy_setopt(mCURL, CURLOPT_WRITEFUNCTION, &HTTPObject::writeCallback);
+
+   mBuffer = NULL;
+   mBufferSize = 0;
+   mBufferUsed = 0;
 }
 
 HTTPObject::~HTTPObject()
 {
-   dFree(mHostName);
-   dFree(mPath);
-   dFree(mQuery);
-   dFree(mPost);
-
-   mHostName = 0;
-   mPath = 0;
-   mQuery = 0;
-   mPost = 0;
-   dFree(mBufferSave);
+	curl_easy_cleanup(mCURL);
 }
 
 //--------------------------------------
-//--------------------------------------
-void HTTPObject::get(const char *host, const char *path, const char *query)
+
+class CURLFinishEvent : public SimEvent
 {
-   if(mHostName)
-      dFree(mHostName);
-   if(mPath)
-      dFree(mPath);
-   if(mQuery)
-      dFree(mQuery);
-   if(mPost)
-      dFree(mPost);
-   if(mBufferSave)
-      dFree(mBufferSave);
-
-   mBufferSave = 0;
-   mHostName = dStrdup(host);
-   mPath = dStrdup(path);
-   if(query)
-      mQuery = dStrdup(query);
-   else
-      mQuery = NULL;
-   mPost = NULL;
-
-   connect(host);
-}
-
-void HTTPObject::post(const char *host, const char *path, const char *query, const char *post)
-{
-   if(mHostName)
-      dFree(mHostName);
-   if(mPath)
-      dFree(mPath);
-   if(mQuery)
-      dFree(mQuery);
-   if(mPost)
-      dFree(mPost);
-   if(mBufferSave)
-      dFree(mBufferSave);
-
-   mBufferSave = 0;
-   mHostName = dStrdup(host);
-   mPath = dStrdup(path);
-   if(query && query[0])
-      mQuery = dStrdup(query);
-   else
-      mQuery = NULL;
-   mPost = dStrdup(post);
-   connect(host);
-}
-
-static char getHex(char c)
-{
-   if(c <= 9)
-      return c + '0';
-   return c - 10 + 'A';
-}
-
-static S32 getHexVal(char c)
-{
-   if(c >= '0' && c <= '9')
-      return c - '0';
-   else if(c >= 'A' && c <= 'Z')
-      return c - 'A' + 10;
-   else if(c >= 'a' && c <= 'z')
-      return c - 'a' + 10;
-   return -1;
-}
-
-void HTTPObject::expandPath(char *dest, const char *path, U32 destSize)
-{
-   static bool asciiEscapeTableBuilt = false;
-   static bool asciiEscapeTable[256];
-   if(!asciiEscapeTableBuilt)
-   {
-      asciiEscapeTableBuilt = true;
-      U32 i;
-      for(i = 0; i <= ' '; i++)
-         asciiEscapeTable[i] = true;
-      for(;i <= 0x7F; i++)
-         asciiEscapeTable[i] = false;
-      for(;i <= 0xFF; i++)
-         asciiEscapeTable[i] = true;
-      asciiEscapeTable[static_cast<U32>('\"')] = true;
-      asciiEscapeTable[static_cast<U32>('_')] = true;
-      asciiEscapeTable[static_cast<U32>('\'')] = true;
-      asciiEscapeTable[static_cast<U32>('#')] = true;
-      asciiEscapeTable[static_cast<U32>('$')] = true;
-      asciiEscapeTable[static_cast<U32>('%')] = true;
-      asciiEscapeTable[static_cast<U32>('&')] = false;
-      asciiEscapeTable[static_cast<U32>('+')] = true;
-      asciiEscapeTable[static_cast<U32>('-')] = true;
-      asciiEscapeTable[static_cast<U32>('~')] = true;
+public:
+   virtual void process(SimObject *object) {
+      static_cast<HTTPObject *>(object)->process();
    }
+};
 
-   U32 destIndex = 0;
-   U32 srcIndex = 0;
-   while(path[srcIndex] && destIndex < destSize - 3)
-   {
-      char c = path[srcIndex++];
-      if(asciiEscapeTable[static_cast<U32>(c)])
-      {
-         dest[destIndex++] = '%';
-         dest[destIndex++] = getHex((c >> 4) & 0xF);
-         dest[destIndex++] = getHex(c & 0xF);
+void HTTPObject::start()
+{
+   mThread = new std::thread([this]() {
+      //Do the curl
+      mResponseCode = curl_easy_perform(mCURL);
+      Sim::postCurrentEvent(this, new CURLFinishEvent());
+   });
+}
+
+size_t HTTPObject::writeCallback(char *buffer, size_t size, size_t nitems, HTTPObject *object) {
+   return object->processData(buffer, size, nitems);
+}
+
+bool HTTPObject::ensureBuffer(U32 length) {
+   if (mBufferSize < length) {
+      //CURL_MAX_WRITE_SIZE is the maximum packet size we'll be given. So round
+      // off to that and we should not have to allocate too often.
+      length = ((length / CURL_MAX_WRITE_SIZE) + 1) * CURL_MAX_WRITE_SIZE;
+      void *alloced = dRealloc(mBuffer, length * sizeof(char));
+
+      //Out of memory
+      if (!alloced) {
+         return false;
       }
-      else
-         dest[destIndex++] = c;
-   }
-   dest[destIndex] = 0;
-}
 
-//--------------------------------------
-void HTTPObject::onConnected()
-{
-   Parent::onConnected();
-   char expPath[8192];
-   char buffer[8192];
+      mBuffer = (U8 *)alloced;
 
-   if(mQuery)
-   {
-      dSprintf(buffer, sizeof(buffer), "%s?%s", mPath, mQuery);
-      expandPath(expPath, buffer, sizeof(expPath));
-   }
-   else
-      expandPath(expPath, mPath, sizeof(expPath));
-
-   char *pt = dStrchr(mHostName, ':');
-   if(pt)
-      *pt = 0;
-
-   //If we want to do a get request
-   if(mPost == NULL)
-   {
-      dSprintf(buffer, sizeof(buffer), "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", expPath, mHostName);
-   }
-   //Else we want to do a post request
-   else
-   {
-      dSprintf(buffer, sizeof(buffer), "POST %s HTTP/1.1\r\nHost: %s\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: %i\r\n\r\n%s\r\n\r\n",
-         expPath, mHostName, dStrlen(mPost), mPost);
-   }
-
-   if(pt)
-      *pt = ':';
-
-   send((U8*)buffer, dStrlen(buffer));
-   mParseState = ParsingStatusLine;
-   mChunkedEncoding = false;
-}
-
-void HTTPObject::onConnectFailed()
-{
-   dFree(mHostName);
-   dFree(mPath);
-   dFree(mQuery);
-   mHostName = 0;
-   mPath = 0;
-   mQuery = 0;
-   Parent::onConnectFailed();
-}
-
-
-void HTTPObject::onDisconnect()
-{
-   dFree(mHostName);
-   dFree(mPath);
-   dFree(mQuery);
-   mHostName = 0;
-   mPath = 0;
-   mQuery = 0;
-   Parent::onDisconnect();
-}
-
-bool HTTPObject::processLine(UTF8 *line)
-{
-   if(mParseState == ParsingStatusLine)
-   {
-      mParseState = ParsingHeader;
-   }
-   else if(mParseState == ParsingHeader)
-   {
-      if(!dStricmp((char *) line, "transfer-encoding: chunked"))
-         mChunkedEncoding = true;
-      if(line[0] == 0)
-      {
-         if(mChunkedEncoding)
-            mParseState = ParsingChunkHeader;
-         else
-            mParseState = ProcessingBody;
-         return true;
-      }
-   }
-   else if(mParseState == ParsingChunkHeader)
-   {
-      if(line[0]) // strip off the crlf if necessary
-      {
-         mChunkSize = 0;
-         S32 hexVal;
-         while((hexVal = getHexVal(*line++)) != -1)
-         {
-            mChunkSize *= 16;
-            mChunkSize += hexVal;
-         }
-         if(mBufferSave)
-         {
-            mBuffer = mBufferSave;
-            mBufferSize = mBufferSaveSize;
-            mBufferSave = 0;
-         }
-         if(mChunkSize)
-            mParseState = ProcessingBody;
-         else
-         {
-            mParseState = ProcessingDone;
-            finishLastLine();
-         }
-      }
-   }
-   else
-   {
-      return Parent::processLine((UTF8*)line);
+      mBufferSize = length;
    }
    return true;
 }
 
-U32 HTTPObject::onDataReceive(U8 *buffer, U32 bufferLen)
-{
-   U32 start = 0;
-   parseLine(buffer, &start, bufferLen);
-   return start;
+size_t HTTPObject::processData(char *buffer, size_t size, size_t nitems) {
+//   char *packet = Con::getReturnBuffer(size * nitems + 1);
+//   dMemcpy(packet, buffer, size * nitems);
+//   packet[size * nitems] = '\0';
+//   onPacket_callback(packet);
+
+   size_t writeSize = size * nitems + 1;
+
+   if (!ensureBuffer(mBufferUsed + writeSize)) {
+      //Error
+      return 0;
+   }
+
+   dMemcpy(mBuffer + mBufferUsed, buffer, size * nitems);
+   mBufferUsed += size * nitems;
+   mBuffer[mBufferUsed] = 0;
+
+   return size * nitems;
+}
+
+void HTTPObject::process() {
+   //Pull all the lines out of mBuffer
+   char *str = (char *)mBuffer;
+   char *nextLine;
+   do {
+      nextLine = dStrchr(str, '\n');
+
+      //Get how long the current line for allocating
+      U32 lineSize = 0;
+      if (nextLine == NULL) {
+         lineSize = dStrlen(str);
+      } else {
+         lineSize = nextLine - str;
+      }
+
+      //Copy into a return buffer for the script
+      char *line = Con::getReturnBuffer(lineSize + 1);
+      dMemcpy(line, str, lineSize);
+      line[lineSize] = 0;
+
+      //Strip the \r from \r\n
+      if (lineSize > 0 && line[lineSize - 1] == '\r') {
+         line[lineSize - 1] = 0;
+      }
+
+      onLine_callback(line);
+
+      if (nextLine) {
+         //Strip the \n
+         str = nextLine + 1;
+      }
+   } while (nextLine);
+
+   //Clean up
+   dFree(mBuffer);
+   mBuffer = NULL;
+   mBufferUsed = 0;
+   mBufferSize = 0;
 }
 
 //--------------------------------------
-U32 HTTPObject::onReceive(U8 *buffer, U32 bufferLen)
+void HTTPObject::get(const char *host, const char *path, const char *query)
 {
-   if(mParseState == ProcessingBody)
-   {
-      if(mChunkedEncoding && bufferLen >= mChunkSize)
-      {
-         U32 ret = onDataReceive(buffer, mChunkSize);
-         mChunkSize -= ret;
-         if(mChunkSize == 0)
-         {
-            if(mBuffer)
-            {
-               mBufferSaveSize = mBufferSize;
-               mBufferSave = mBuffer;
-               mBuffer = 0;
-               mBufferSize = 0;
-            }
-            mParseState = ParsingChunkHeader;
-         }
-         return ret;
-      }
-      else
-      {
-         U32 ret = onDataReceive(buffer, bufferLen);
-         mChunkSize -= ret;
-         return ret;
-      }
+   dsize_t urlLength = dStrlen(host) + dStrlen(path) + 2;
+   if (query) {
+      urlLength += dStrlen(query);
    }
-   else if(mParseState != ProcessingDone)
-   {
-      U32 start = 0;
-      parseLine(buffer, &start, bufferLen);
-      return start;
+	char *url = new char[urlLength];
+	dSprintf(url, urlLength, "%s%s%s%s", host, path, (query ? "?" : ""), (query ? query : ""));
+	curl_easy_setopt(mCURL, CURLOPT_URL, url);
+
+	start();
+}
+
+void HTTPObject::post(const char *host, const char *path, const char *query, const char *post)
+{
+   dsize_t urlLength = dStrlen(host) + dStrlen(path) + 2;
+   if (query) {
+      urlLength += dStrlen(query);
    }
-   return bufferLen;
+   char *url = new char[urlLength];
+   dSprintf(url, urlLength, "%s%s%s%s", host, path, (query ? "?" : ""), (query ? query : ""));
+   curl_easy_setopt(mCURL, CURLOPT_URL, url);
+
+   curl_easy_setopt(mCURL, CURLOPT_POST, true);
+   curl_easy_setopt(mCURL, CURLOPT_POSTFIELDS, post);
+
+   start();
 }
 
 //--------------------------------------
