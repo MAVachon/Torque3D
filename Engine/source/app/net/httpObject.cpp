@@ -162,11 +162,13 @@ HTTPObject::HTTPObject()
    curl_easy_setopt(mCURL, CURLOPT_ENCODING, "UTF-8");
    curl_easy_setopt(mCURL, CURLOPT_WRITEDATA, this);
    curl_easy_setopt(mCURL, CURLOPT_WRITEFUNCTION, &HTTPObject::writeCallback);
+   curl_easy_setopt(mCURL, CURLOPT_HEADERDATA, this);
+   curl_easy_setopt(mCURL, CURLOPT_HEADERFUNCTION, &HTTPObject::headerCallback);
 
    mBuffer = NULL;
    mBufferSize = 0;
    mBufferUsed = 0;
-   mHeaders = NULL;
+   mSendHeaders = NULL;
 }
 
 HTTPObject::~HTTPObject()
@@ -284,6 +286,27 @@ void HTTPObject::process() {
    onDisconnect_callback();
 }
 
+size_t HTTPObject::headerCallback(char *buffer, size_t size, size_t nitems, HTTPObject *object) {
+   return object->processHeader(buffer, size, nitems);
+}
+
+size_t HTTPObject::processHeader(char *buffer, size_t size, size_t nitems) {
+   char *colon = dStrchr(buffer, ':');
+   if (colon != NULL) {
+      String key(buffer, colon - buffer);
+      String value(colon + 2);
+
+      if (value[value.length() - 1] == '\n')
+         value.erase(value.length() - 1, 1);
+      if (value[value.length() - 1] == '\r')
+         value.erase(value.length() - 1, 1);
+
+      mRecieveHeaders.insert(key, value);
+   }
+
+   return size * nitems;
+}
+
 //--------------------------------------
 void HTTPObject::get(const char *host, const char *path, const char *query) {
    dsize_t urlLength = dStrlen(host) + dStrlen(path) + 2;
@@ -293,8 +316,8 @@ void HTTPObject::get(const char *host, const char *path, const char *query) {
    char *url = new char[urlLength];
    dSprintf(url, urlLength, "%s%s%s%s", host, path, (query && *query ? "?" : ""), (query && *query ? query : ""));
    curl_easy_setopt(mCURL, CURLOPT_URL, url);
-   if (mHeaders) {
-      curl_easy_setopt(mCURL, CURLOPT_HTTPHEADER, mHeaders);
+   if (mSendHeaders) {
+      curl_easy_setopt(mCURL, CURLOPT_HTTPHEADER, mSendHeaders);
    }
 
    start();
@@ -311,11 +334,24 @@ void HTTPObject::post(const char *host, const char *path, const char *query, con
 
    curl_easy_setopt(mCURL, CURLOPT_POST, true);
    curl_easy_setopt(mCURL, CURLOPT_POSTFIELDS, post);
-   if (mHeaders) {
-      curl_easy_setopt(mCURL, CURLOPT_HTTPHEADER, mHeaders);
+   if (mSendHeaders) {
+      curl_easy_setopt(mCURL, CURLOPT_HTTPHEADER, mSendHeaders);
    }
 
    start();
+}
+
+const char *HTTPObject::getHeader(const char *name) {
+   if (!mRecieveHeaders.contains(name)) {
+      return NULL;
+   }
+   return mRecieveHeaders[name].c_str();
+}
+
+void HTTPObject::getHeaderList(Vector<String> &headers) {
+   for (const auto &pair : mRecieveHeaders) {
+      headers.push_back(pair.key);
+   }
 }
 
 void HTTPObject::setHeader(const char *name, const char *value) {
@@ -342,7 +378,7 @@ void HTTPObject::setHeader(const char *name, const char *value) {
          header[i] = '-';
    }
 
-   mHeaders = curl_slist_append(mHeaders, header);
+   mSendHeaders = curl_slist_append(mSendHeaders, header);
 }
 
 //--------------------------------------
@@ -399,6 +435,57 @@ DefineEngineMethod(HTTPObject, post, void, (const char *address, const char *req
    )
 {
    object->post(address, requirstURI, query, post);
+}
+
+DefineEngineMethod(HTTPObject, getHeader, const char *, (const char *name),,
+   "@brief Get the contents of an HTTP header after the request has finished loading.\n\n"
+   "@param name Header name\n"
+
+   "@tsexample\n"
+      "function someHTTPObject::onDisconnect(%this) {\n"
+      "   echo(%this.getHeader(\"Cookie\"));\n"
+      "}\n"
+   "@endtsexample\n\n"
+   )
+{
+   return object->getHeader(name);
+}
+
+
+DefineEngineMethod(HTTPObject, getHeaderList, const char *, (),,
+   "@brief Get a tab-separated list of all HTTP headers\n\n"
+
+   "@tsexample\n"
+      "function someHTTPObject::onDisconnect(%this) {\n"
+      "   echo(%this.getHeaderList());\n"
+      "}\n"
+   "@endtsexample\n\n"
+   )
+{
+   Vector<String> headers;
+   object->getHeaderList(headers);
+
+   //Create a tab-separated list
+   dsize_t bufferLen = 1;
+   for (const String &str : headers) {
+      bufferLen += str.length() + 1;
+   }
+   char *buffer = Con::getReturnBuffer(bufferLen);
+   buffer[0] = 0;
+
+   U32 at = 0;
+   for (const String &str : headers) {
+      dStrcat(buffer, str.c_str());
+      at += str.length();
+      buffer[at] = '\t';
+      buffer[at + 1] = '\0';
+
+      at ++;
+   }
+   if (at > 0) {
+      buffer[at - 1] = 0;
+   }
+   return buffer;
 }
 
 DefineEngineMethod(HTTPObject, setHeader, void, (const char *name, const char *value), (""),
