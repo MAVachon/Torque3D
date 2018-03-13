@@ -2221,6 +2221,10 @@ void WorldEditor::on3DMouseDragged(const Gui3DMouseEvent & event)
                mSelected->addObject( mHitObject );
          }
       }
+		else
+		{
+			Con::executef(this, "onDragStart", mSelected->getIdString());
+		}
 
       // create and add an undo state
       if ( !mDragSelect )

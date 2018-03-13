@@ -1502,7 +1502,22 @@ DefineConsoleMethod(GuiMenuBar, removeFromCanvas, void, (), , "()")
    if(canvas)
       canvas->setMenuBar(nullptr);
 }
+DefineConsoleMethod(GuiMenuBar, buildAccel, void, (), , "()")
+{
+	GuiCanvas* canvas = object->getRoot();
+	if (!canvas)
+		return;
+	
+	object->buildWindowAcceleratorMap(*canvas->getPlatformWindow()->getInputGenerator());
+}
+DefineConsoleMethod(GuiMenuBar, removeAccel, void, (), , "()")
+{
+	GuiCanvas* canvas = object->getRoot();
+	if (!canvas)
+		return;
 
+	object->removeWindowAcceleratorMap(*canvas->getPlatformWindow()->getInputGenerator());
+}
 DefineConsoleMethod(GuiMenuBar, getMenuCount, S32, (), , "()")
 {
    return object->getMenuListCount();
