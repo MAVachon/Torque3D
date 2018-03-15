@@ -1578,7 +1578,7 @@ bool MeshRoad::castRay( const Point3F &s, const Point3F &e, RayInfo *info )
 
 bool MeshRoad::collideBox(const Point3F &start, const Point3F &end, RayInfo* info)
 {   
-   Con::warnf( "MeshRoad::collideBox() - not yet implemented!" );
+   //Con::warnf( "MeshRoad::collideBox() - not yet implemented!" );
    return Parent::collideBox( start, end, info );
 }
 

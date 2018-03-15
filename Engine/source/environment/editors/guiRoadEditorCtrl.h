@@ -94,6 +94,7 @@ class GuiRoadEditorCtrl : public EditTSCtrl
       S32 getSelectedNode() { return mSelNode; };
 
       F32 getNodeWidth();
+		S32 getNodeCount();
       void setNodeWidth( F32 width );
 
 		Point3F getNodePosition();

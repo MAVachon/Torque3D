@@ -115,7 +115,7 @@ class GuiRiverEditorCtrl : public EditTSCtrl
 
 		VectorF getNodeNormal();
       void setNodeNormal( const VectorF &normal );
-
+		S32 getNodeCount();//TorqueLab
    protected:
 
       void _renderSelectedRiver( ObjectRenderInst *ri, SceneRenderState *state, BaseMatInstance *matInst );

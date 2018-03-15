@@ -1344,6 +1344,9 @@ void LabWindowCtrl::onRender(Point2I offset, const RectI &updateRect)
 	if (!mProfile || mProfile->mFont == NULL || mProfile->mBitmapArrayRects.size() < NumBitmaps)
 		return Parent::onRender(offset, updateRect);
 
+	mTextureObject = mProfile->mTextureObject;
+	if (!mTextureObject)
+		return Parent::onRender(offset, updateRect);
 	// Draw the outline
 	RectI winRect;
 	winRect.point = offset;
@@ -1379,6 +1382,8 @@ void LabWindowCtrl::onRender(Point2I offset, const RectI &updateRect)
 	drawUtil->drawBitmapSR(mTextureObject, Point2I(offset.x + getWidth() - mBitmapBounds[topEnd].extent.x, offset.y),
 		mBitmapBounds[topEnd]);
 
+	
+	
 	RectI destRect;
 	destRect.point.x = offset.x + mBitmapBounds[topBase].extent.x;
 	destRect.point.y = offset.y;

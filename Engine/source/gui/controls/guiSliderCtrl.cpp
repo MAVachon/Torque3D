@@ -365,7 +365,7 @@ void GuiSliderCtrl::onRender(Point2I offset, const RectI &updateRect)
 
    GFXDrawUtil* drawUtil = GFX->getDrawUtil();
 
-   if( mHasTexture )
+   if( mHasTexture && mProfile->mTextureObject)
    {
       if(mTicks > 0)
       {

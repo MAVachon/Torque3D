@@ -99,7 +99,7 @@ class GuiMeshRoadEditorCtrl : public EditTSCtrl
 
       F32 getNodeDepth();
       void setNodeDepth( F32 depth );
-		
+		S32 getNodeCount();//TorqueLab
 		Point3F getNodePosition();
       void setNodePosition(const Point3F& pos);
 

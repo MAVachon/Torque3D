@@ -978,7 +978,15 @@ F32 GuiRoadEditorCtrl::getNodeWidth()
 
    return 0.0f;   
 }
+//TorqueLab - Script access to the Road Node Count
+S32 GuiRoadEditorCtrl::getNodeCount()
+{
+	if (mSelRoad)
+		return mSelRoad->mNodes.size();
 
+	return 0;
+}
+//TorqueLab END - Script access to the Road Node Count
 void GuiRoadEditorCtrl::setNodePosition(const Point3F& pos)
 {
    if ( mSelRoad && mSelNode != -1 )
@@ -1109,4 +1117,8 @@ DefineConsoleMethod( GuiRoadEditorCtrl, deleteRoad, void, (), , "" )
 DefineConsoleMethod(GuiRoadEditorCtrl, setSelectedNode, void, (S32 node), , "")
 {
 	object->setSelectedNode(node);
+}
+DefineConsoleMethod(GuiRoadEditorCtrl, getNodeCount, S32, (), , "")
+{
+	return object->getNodeCount();
 }

@@ -1332,7 +1332,8 @@ void GuiTextEditCtrl::drawText( const RectI &drawRect, bool isFocused )
       mCursorPos = textBuffer.length();
 
    paddingLeftTop.set(( mProfile->mTextOffset.x != 0 ? mProfile->mTextOffset.x : 3 ), mProfile->mTextOffset.y);
-   paddingRightBottom = paddingLeftTop;
+	paddingRightBottom.set((mProfile->mTextOffset.x != 0 ? mProfile->mTextOffset.x : 3), mProfile->mTextOffset.y);
+	paddingRightBottom.set(paddingLeftTop.x, paddingLeftTop.y);// = paddingLeftTop;
 
    // Center vertically:
    drawPoint.y += ( ( drawRect.extent.y - paddingLeftTop.y - paddingRightBottom.y - S32( mProfile->mFont->getHeight() ) ) / 2 ) + paddingLeftTop.y;

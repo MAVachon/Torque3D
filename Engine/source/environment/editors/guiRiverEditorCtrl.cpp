@@ -1268,7 +1268,15 @@ VectorF GuiRiverEditorCtrl::getNodeNormal()
 
    return VectorF::Zero;
 }
+//TorqueLab - Script access to the Road Node Count
+S32 GuiRiverEditorCtrl::getNodeCount()
+{
+	if (mSelRiver)
+		return mSelRiver->mNodes.size();
 
+	return 0;
+}
+//TorqueLab End - Script access to the Road Node Count
 void GuiRiverEditorCtrl::setSelectedNode( S32 node )
 {
    //if ( mSelNode == node )
@@ -1488,4 +1496,9 @@ DefineConsoleMethod(GuiRiverEditorCtrl, getSelectedNode, S32, (), , "")
 {
 	return object->getSelectedNode();
 }
+DefineConsoleMethod(GuiRiverEditorCtrl, getNodeCount, S32, (), , "")
+{
+	return object->getNodeCount();
+}
+
 //TorqueLab Feature End
