@@ -186,3 +186,4 @@ Qt*.dll
 Documentation/
 Engine/bin/doxygen/
 Tools/CMake/modules/module_physx3.cmake
+Projects/
