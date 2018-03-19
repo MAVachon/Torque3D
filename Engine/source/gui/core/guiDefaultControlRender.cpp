@@ -552,8 +552,8 @@ void renderFixedBitmapBordersFilledIndex( const RectI &bounds, S32 startIndex, G
    }
 }
 // ----------------------------------------------------------------------------------
-// AlterVerse Code Modification (MAV) - Gui Render
-// Mud-H Custom Box rendering system
+
+// TorqueLab Custom Box rendering system
 /// Universal function to render a BitmapArray box
 void renderBox(const RectI &boundsRect, GuiControlProfile *profile)
 {
@@ -682,179 +682,113 @@ void renderSizableBox(const RectI &bounds, S32 baseMultiplier, GuiControlProfile
 		// End drawing sides and top stretched borders
 	}
 }
-// AlterVerse Code Modification (MAV) - Gui Render
 
-//TorqueLab Gui - Universal Gui Render system
-/// Universal function to render a BitmapArray box
-void renderUniBox(const RectI &boundsRect, GuiControlProfile *profile)
+//  Render out the sizable bitmap borders based on a multiplier into the bitmap array
+// Based on the 'Skinnable GUI Controls in TGE' resource by Justin DuJardin
+void renderSizableBox(const RectI &bounds, S32 baseMultiplier, GuiControlProfile *profile)
 {
-	S32 bitmapCount = profile->constructBitmapArray();
-
-	if (!profile->mUseBitmapArray){
-		return;
-	}
-	//For initial implementation, the Border value must be lower or equal to -5
-	if (bitmapCount < 9 || profile->mBorder > -5){
-		return renderBox(boundsRect, profile);
-	}
-	//The UniBox use a special bitmap Array that work with most GuiCOntrol as unique
-	// source. There's different type of UniBox data, it can be defined with border ID
-	// but also by looking at the count of Bmps.
-
-	// Default Set = mBorder -5
-	// Here's the disposition
-	// 0 - 8 = Box (An area splited in 9 part naturally)
-	// 9 - 11 = TitleBar 
-	// 12 - 14 = SecondaryBar - Smaller title
-	// 15 - 20 = Rollout Expand/COllapse (Expanded = L15 | C16 | R17 Collapsed Expanded = L18 | C19 | R20
-	// Then it could be repeated for alternate colors 21 to 40
-
-	//Let's render main frame
-	renderUniBoxFrame(boundsRect, 0, profile);
-	renderUniBoxBar(boundsRect, 0, profile);
-}
-//  Render a 9 bitmaps box frame by starting at startBmp index and ending at startBmp + 9
-void renderUniBoxFrame(const RectI &bounds, S32 startBmp, GuiControlProfile *profile)
-{
-
-	if (profile->mBitmapArrayRects.size() < 9)
-		return;
-
 	//  Indices into the bitmap array
-	S32 numBitmaps = 9;
-	S32 borderTopLeft = startBmp;
-	S32 borderTop = 1 + borderTopLeft;
-	S32 borderTopRight = 2 + borderTopLeft;
+	S32 numBitmaps = 8;
+	S32 borderTopLeft = numBitmaps * baseMultiplier - numBitmaps;
+	S32 borderTopRight = 1 + borderTopLeft;
+	S32 borderTop = 2 + borderTopLeft;
+
 	S32 borderLeft = 3 + borderTopLeft;
-	S32 fill = 4 + borderTopLeft;
-	S32 borderRight = 5 + borderTopLeft;
-	S32 borderBottomLeft = 6 + borderTopLeft;
-	S32 borderBottom = 7 + borderTopLeft;
-	S32 borderBottomRight = 8 + borderTopLeft;
+	//S32 fill =              4 + borderTopLeft;
+	S32 borderRight = 4 + borderTopLeft;
+	S32 borderBottomLeft = 5 + borderTopLeft;
+	S32 borderBottom = 6 + borderTopLeft;
+	S32 borderBottomRight = 7 + borderTopLeft;
+
 
 	GFXDrawUtil *drawer = GFX->getDrawUtil();
 
 	drawer->clearBitmapModulation();
 
-	RectI destRect;
-	RectI stretchRect;
-	RectI* mBitmapBounds = profile->mBitmapArrayRects.address();
+	if (profile->mBitmapArrayRects.size() >= (numBitmaps * baseMultiplier))
+	{
+		RectI destRect;
+		RectI stretchRect;
+		RectI* mBitmapBounds = profile->mBitmapArrayRects.address();
 
-	// Draw all corners first.
+		// Draw all corners first.
 
-	//top left border
-	drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x, bounds.point.y), mBitmapBounds[borderTopLeft]);
-	//top right border
-	drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x + bounds.extent.x - mBitmapBounds[borderTopRight].extent.x, bounds.point.y), mBitmapBounds[borderTopRight]);
+		//top left border
+		drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x, bounds.point.y), mBitmapBounds[borderTopLeft]);
+		//top right border
+		drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x + bounds.extent.x - mBitmapBounds[borderTopRight].extent.x, bounds.point.y), mBitmapBounds[borderTopRight]);
 
-	//bottom left border
-	drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x, bounds.point.y + bounds.extent.y - mBitmapBounds[borderBottomLeft].extent.y), mBitmapBounds[borderBottomLeft]);
-	//bottom right border
-	drawer->drawBitmapSR(profile->mTextureObject, Point2I(
-		bounds.point.x + bounds.extent.x - mBitmapBounds[borderBottomRight].extent.x,
-		bounds.point.y + bounds.extent.y - mBitmapBounds[borderBottomRight].extent.y),
-		mBitmapBounds[borderBottomRight]);
+		//bottom left border
+		drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x, bounds.point.y + bounds.extent.y - mBitmapBounds[borderBottomLeft].extent.y), mBitmapBounds[borderBottomLeft]);
+		//bottom right border
+		drawer->drawBitmapSR(profile->mTextureObject, Point2I(
+			bounds.point.x + bounds.extent.x - mBitmapBounds[borderBottomRight].extent.x,
+			bounds.point.y + bounds.extent.y - mBitmapBounds[borderBottomRight].extent.y),
+			mBitmapBounds[borderBottomRight]);
 
-	// End drawing corners
+		// End drawing corners
 
-	// Begin drawing sides and top stretched borders
+		// Begin drawing sides and top stretched borders
 
-	//start with top line stretch
-	destRect.point.x = bounds.point.x + mBitmapBounds[borderTopLeft].extent.x;
-	destRect.extent.x = bounds.extent.x - mBitmapBounds[borderTopRight].extent.x - mBitmapBounds[borderTopLeft].extent.x;
-	destRect.extent.y = mBitmapBounds[borderTop].extent.y;
-	destRect.point.y = bounds.point.y;
-	//stretch it
-	stretchRect = mBitmapBounds[borderTop];
-	stretchRect.inset(1, 0);
-	//draw it
-	drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
-	//bottom line stretch
-	destRect.point.x = bounds.point.x + mBitmapBounds[borderBottomLeft].extent.x;
-	destRect.extent.x = bounds.extent.x - mBitmapBounds[borderBottomRight].extent.x - mBitmapBounds[borderBottomLeft].extent.x;
-	destRect.extent.y = mBitmapBounds[borderBottom].extent.y;
-	destRect.point.y = bounds.point.y + bounds.extent.y - mBitmapBounds[borderBottom].extent.y;
-	//stretch it
-	stretchRect = mBitmapBounds[borderBottom];
-	stretchRect.inset(1, 0);
-	//draw it
-	drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
-	//left line stretch
-	destRect.point.x = bounds.point.x;
-	destRect.extent.x = mBitmapBounds[borderLeft].extent.x;
-	destRect.extent.y = bounds.extent.y - mBitmapBounds[borderTopLeft].extent.y - mBitmapBounds[borderBottomLeft].extent.y;
-	destRect.point.y = bounds.point.y + mBitmapBounds[borderTopLeft].extent.y;
-	//stretch it
-	stretchRect = mBitmapBounds[borderLeft];
-	stretchRect.inset(0, 1);
-	//draw it
-	drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
-	//right line stretch
-	destRect.point.x = bounds.point.x + bounds.extent.x - mBitmapBounds[borderRight].extent.x;
-	destRect.extent.x = mBitmapBounds[borderRight].extent.x;
-	destRect.extent.y = bounds.extent.y - mBitmapBounds[borderTopRight].extent.y - mBitmapBounds[borderBottomRight].extent.y;
-	destRect.point.y = bounds.point.y + mBitmapBounds[borderTopRight].extent.y;
-	//stretch it
-	stretchRect = mBitmapBounds[borderRight];
-	stretchRect.inset(0, 1);
-	//draw it
-	drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
-	//fill stretch
-	destRect.point.x = bounds.point.x + mBitmapBounds[borderLeft].extent.x;
-	destRect.extent.x = (bounds.extent.x) - mBitmapBounds[borderLeft].extent.x - mBitmapBounds[borderRight].extent.x;
-	destRect.extent.y = bounds.extent.y - mBitmapBounds[borderTop].extent.y - mBitmapBounds[borderBottom].extent.y;
-	destRect.point.y = bounds.point.y + mBitmapBounds[borderTop].extent.y;
-	//stretch it
-	stretchRect = mBitmapBounds[fill];
-	stretchRect.inset(1, 1);
-	//draw it
-	drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
+		//start with top line stretch
+		destRect.point.x = bounds.point.x + mBitmapBounds[borderTopLeft].extent.x;
+		destRect.extent.x = bounds.extent.x - mBitmapBounds[borderTopRight].extent.x - mBitmapBounds[borderTopLeft].extent.x;
+		destRect.extent.y = mBitmapBounds[borderTop].extent.y;
+		destRect.point.y = bounds.point.y;
+		//stretch it
+		stretchRect = mBitmapBounds[borderTop];
+		stretchRect.inset(1, 0);
+		//draw it
+		drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
+		//bottom line stretch
+		destRect.point.x = bounds.point.x + mBitmapBounds[borderBottomLeft].extent.x;
+		destRect.extent.x = bounds.extent.x - mBitmapBounds[borderBottomRight].extent.x - mBitmapBounds[borderBottomLeft].extent.x;
+		destRect.extent.y = mBitmapBounds[borderBottom].extent.y;
+		destRect.point.y = bounds.point.y + bounds.extent.y - mBitmapBounds[borderBottom].extent.y;
+		//stretch it
+		stretchRect = mBitmapBounds[borderBottom];
+		stretchRect.inset(1, 0);
+		//draw it
+		drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
+		//left line stretch
+		destRect.point.x = bounds.point.x;
+		destRect.extent.x = mBitmapBounds[borderLeft].extent.x;
+		destRect.extent.y = bounds.extent.y - mBitmapBounds[borderTopLeft].extent.y - mBitmapBounds[borderBottomLeft].extent.y;
+		destRect.point.y = bounds.point.y + mBitmapBounds[borderTopLeft].extent.y;
+		//stretch it
+		stretchRect = mBitmapBounds[borderLeft];
+		stretchRect.inset(0, 1);
+		//draw it
+		drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
+		//right line stretch
+		destRect.point.x = bounds.point.x + bounds.extent.x - mBitmapBounds[borderRight].extent.x;
+		destRect.extent.x = mBitmapBounds[borderRight].extent.x;
+		destRect.extent.y = bounds.extent.y - mBitmapBounds[borderTopRight].extent.y - mBitmapBounds[borderBottomRight].extent.y;
+		destRect.point.y = bounds.point.y + mBitmapBounds[borderTopRight].extent.y;
+		//stretch it
+		stretchRect = mBitmapBounds[borderRight];
+		stretchRect.inset(0, 1);
+		//draw it
+		drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
+		//fill stretch
+		destRect.point.x = bounds.point.x + mBitmapBounds[borderLeft].extent.x;
+		destRect.extent.x = (bounds.extent.x) - mBitmapBounds[borderLeft].extent.x - mBitmapBounds[borderRight].extent.x;
+		destRect.extent.y = bounds.extent.y - mBitmapBounds[borderTop].extent.y - mBitmapBounds[borderBottom].extent.y;
+		destRect.point.y = bounds.point.y + mBitmapBounds[borderTop].extent.y;
+		//stretch it
+		stretchRect = mBitmapBounds[fill];
+		stretchRect.inset(1, 1);
+		//draw it
+		drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
 
-	// End drawing sides and top stretched borders
+		//stretchRect = mBitmapBounds[fill];
+		//stretchRect.inset(1,1);
+		//draw it
+		//drawer->drawBitmapStretchSR(profile->mTextureObject,destRect,stretchRect);
 
+		// End drawing sides and top stretched borders
+	}
 }
-//  Render a 9 bitmaps box frame by starting at startBmp index and ending at startBmp + 9
-void renderUniBoxBar(const RectI &bounds, S32 startIndex, GuiControlProfile *profile)
-{
-	if (profile->mBitmapArrayRects.size() < startIndex + 3)
-		return;
 
-	//  Indices into the bitmap array
-	S32 numBitmaps = 3;
-	S32 borderLeft = startIndex;
-	S32 fill = 1 + startIndex;
-	S32 borderRight = 2 + startIndex;
 
-	GFXDrawUtil *drawer = GFX->getDrawUtil();
-	drawer->clearBitmapModulation();
-
-	RectI destRect;
-	RectI stretchRect;
-	RectI* mBitmapBounds = profile->mBitmapArrayRects.address();
-
-	// Draw all corners first.
-
-	//left border
-	drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x, bounds.point.y), mBitmapBounds[borderLeft]);
-	//right border
-	drawer->drawBitmapSR(profile->mTextureObject, Point2I(bounds.point.x + bounds.extent.x - mBitmapBounds[borderRight].extent.x, bounds.point.y), mBitmapBounds[borderRight]);
-
-	// End drawing corners
-
-	// Begin drawing fill
-
-	//fill stretch
-	destRect.point.x = bounds.point.x + mBitmapBounds[borderLeft].extent.x;
-	destRect.extent.x = (bounds.extent.x) - mBitmapBounds[borderLeft].extent.x - mBitmapBounds[borderRight].extent.x;
-	destRect.extent.y = mBitmapBounds[fill].extent.y;
-	destRect.point.y = bounds.point.y;
-	//stretch it
-	stretchRect = mBitmapBounds[fill];
-	stretchRect.inset(1, 0);
-	//draw it
-	drawer->drawBitmapStretchSR(profile->mTextureObject, destRect, stretchRect);
-
-	// End drawing fill
-
-}
 //TorqueLab Gui - Universal Gui Render system END
