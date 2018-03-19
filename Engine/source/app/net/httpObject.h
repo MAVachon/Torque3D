@@ -23,56 +23,60 @@
 #ifndef _HTTPOBJECT_H_
 #define _HTTPOBJECT_H_
 
-#ifndef _TVECTOR_H_
+#include "platform/platform.h"
+#include "console/simBase.h"
 #include "core/util/tVector.h"
-#endif
-#ifndef _TCPOBJECT_H_
-#include "app/net/tcpObject.h"
-#endif
+#include "core/util/tDictionary.h"
 
-class HTTPObject : public TCPObject
+#include <curl/curl.h>
+#include <thread>
+#include <atomic>
+
+class HTTPObject : public SimObject
 {
-private:
-   typedef TCPObject Parent;
-protected:
-   enum ParseState {
-      ParsingStatusLine,
-      ParsingHeader,
-      ParsingChunkHeader,
-      ProcessingBody,
-      ProcessingDone,
-   };
-   ParseState mParseState;
-   U32 mTotalBytes;
-   U32 mBytesRemaining;
- public:
-   U32 mStatus;
-   F32 mVersion;
-   U32 mContentLength;
-   bool mChunkedEncoding;
-   U32 mChunkSize;
-   const char *mContentType;
-   char *mHostName;
-   char *mPath;
-   char *mQuery;
-   char *mPost;
-   U8 *mBufferSave;
-   U32 mBufferSaveSize;
 public:
-   static void expandPath(char *dest, const char *path, U32 destSize);
+   DECLARE_CALLBACK(void, onLine, (const char* line));
+   DECLARE_CALLBACK(bool, onPacket, (const char* data));
+   // DECLARE_CALLBACK(void, onEndReceive, ());
+   // DECLARE_CALLBACK(void, onDNSResolved,());
+   // DECLARE_CALLBACK(void, onDNSFailed, ());
+   DECLARE_CALLBACK(void, onConnected, ());
+   DECLARE_CALLBACK(void, onConnectFailed, ());
+   DECLARE_CALLBACK(void, onDisconnect, ());
+
+private:
+   typedef SimObject Parent;
+   friend class CURLFinishEvent;
+
+protected:
+   CURL *mCURL;
+   std::thread *mThread;
+   CURLcode mResponseCode;
+   curl_slist *mSendHeaders;
+   HashMap<String, String> mRecieveHeaders;
+
+   U8 *mBuffer;
+   U32 mBufferSize;
+   U32 mBufferUsed;
+
+   bool ensureBuffer(U32 length);
+
+   static size_t writeCallback(char *buffer, size_t size, size_t nitems, HTTPObject *object);
+   size_t processData(char *buffer, size_t size, size_t nitems);
+
+   static size_t headerCallback(char *buffer, size_t size, size_t nitems, HTTPObject *object);
+   size_t processHeader(char *buffer, size_t size, size_t nitems);
+
+   void start();
+   void process();
+public:
    void get(const char *hostName, const char *urlName, const char *query);
    void post(const char *host, const char *path, const char *query, const char *post);
+   void setHeader(const char *name, const char *value);
+   const char *getHeader(const char *name);
+   void getHeaderList(Vector<String> &headers);
    HTTPObject();
-   ~HTTPObject();
-
-   //static HTTPObject *find(U32 tag);
-
-   virtual U32 onDataReceive(U8 *buffer, U32 bufferLen);
-   virtual U32 onReceive(U8 *buffer, U32 bufferLen); // process a buffer of raw packet data
-   virtual void onConnected();
-   virtual void onConnectFailed();
-   virtual void onDisconnect();
-   bool processLine(UTF8 *line);
+   virtual ~HTTPObject();
 
    DECLARE_CONOBJECT(HTTPObject);
 };
