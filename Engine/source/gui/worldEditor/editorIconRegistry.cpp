@@ -22,11 +22,13 @@
 
 #include "platform/platform.h"
 #include "gui/worldEditor/editorIconRegistry.h"
-#include "gui/buttons/guiIconButtonCtrl.h"
+
 #include "console/console.h"
 #include "console/simBase.h"
-#include "gfx/gfxDrawUtil.h"
-#include "gui/core/guiDefaultControlRender.h"
+#include "gui/core/guiCanvas.h"
+
+
+
 EditorIconRegistry gEditorIcons;
 
 ConsoleDoc(
