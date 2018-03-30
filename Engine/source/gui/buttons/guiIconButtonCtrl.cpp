@@ -206,7 +206,7 @@ void GuiIconButtonCtrl::setBitmap(const char *name)
       return;
 
    if (*mBitmapName)
-   {
+   {		
 		mTextureNormal = GFXTexHandle(name, &GFXDefaultGUIProfile, avar("%s() - mTextureNormal (line %d)", __FUNCTION__, __LINE__));
    }
    else
