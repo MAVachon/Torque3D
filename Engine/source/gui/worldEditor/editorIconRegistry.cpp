@@ -22,11 +22,11 @@
 
 #include "platform/platform.h"
 #include "gui/worldEditor/editorIconRegistry.h"
-
+#include "gui/buttons/guiIconButtonCtrl.h"
 #include "console/console.h"
 #include "console/simBase.h"
-
-
+#include "gfx/gfxDrawUtil.h"
+#include "gui/core/guiDefaultControlRender.h"
 EditorIconRegistry gEditorIcons;
 
 ConsoleDoc(
@@ -58,7 +58,7 @@ void EditorIconRegistry::loadFromPath( const String &path, bool overwrite )
    String defaultIconFile = path + "default";
 
    mDefaultIcon.set( defaultIconFile,
-                     &GFXTexturePersistentSRGBProfile,
+                     &GFXDefaultGUIProfile,
                      avar("%s() - mIcons[] (line %d)", 
                      __FUNCTION__, __LINE__) );
 }
@@ -66,7 +66,7 @@ void EditorIconRegistry::loadFromPath( const String &path, bool overwrite )
 void EditorIconRegistry::add( const String &className, const String &imageFile, bool overwrite )
 {
    // First see if we can load the image.
-   GFXTexHandle icon(   imageFile, &GFXTexturePersistentSRGBProfile,
+   GFXTexHandle icon(   imageFile, &GFXDefaultGUIProfile,
                         avar("%s() - mIcons[] (line %d)", __FUNCTION__, __LINE__) );
    if ( icon.isNull() )
       return;
