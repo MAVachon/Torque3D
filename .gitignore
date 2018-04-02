@@ -187,3 +187,4 @@ Documentation/
 Engine/bin/doxygen/
 Tools/CMake/modules/module_physx3.cmake
 Projects/
+Engine/source/gui/lab_dev/

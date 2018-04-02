@@ -288,3 +288,14 @@ void LabBoxCtrl::onRender(Point2I offset, const RectI &updateRect)
 	// Render Children
 	renderChildControls(offset, updateRect);
 }
+DefineEngineMethod(LabBoxCtrl, freeze, void, (bool freeze), ,
+	"Prevents control from restacking - useful when adding or removing child controls\n"
+	"@param freeze True to freeze the control, false to unfreeze it\n\n"
+	"@tsexample\n"
+	"%stackCtrl.freeze(true);\n"
+	"// add controls to stack\n"
+	"%stackCtrl.freeze(false);\n"
+	"@endtsexample\n")
+{
+	object->freeze(freeze);
+}
