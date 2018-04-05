@@ -475,7 +475,7 @@ DefineEngineMethod(HTTPObject, getHeaderList, const char *, (),,
 
    U32 at = 0;
    for (const String &str : headers) {
-      dStrcat(buffer, str.c_str());
+      dStrcat(buffer, str.c_str(),2048);
       at += str.length();
       buffer[at] = '\t';
       buffer[at + 1] = '\0';

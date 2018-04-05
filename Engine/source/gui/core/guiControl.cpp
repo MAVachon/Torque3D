@@ -2578,7 +2578,7 @@ DefineEngineMethod( GuiControl, findHitControls, const char*, ( S32 x, S32 y, S3
       return "";
    
    char* buffer = Con::getReturnBuffer( s.size() );
-   dStrcpy( buffer, s.c_str() );
+   dStrcpy( buffer, s.c_str(), s.size() );
    
    return buffer;
 }
